@@ -1,0 +1,12 @@
+# Core Python dependencies
+numpy
+pandas
+matplotlib
+scipy
+scikit-learn
+cvxopt
+
+# Optional: for legacy Theano-based Deep Learning Tutorials (Python 2 only)
+# theano
+# keras
+# future

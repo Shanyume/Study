@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Build artifacts
+*.aux
+*.lof
+*.log
+*.out
+*.toc
+
+# Project-local generated files
+weights/test.weights
