@@ -26,6 +26,27 @@ pip install -r requirements.txt
 | SVM - QP | [SVM/SVM_by_QP](SVM/SVM_by_QP) | 合成二维数据 | cvxopt 求解二次规划 SVM |
 | Kernel Ridge | [Ridge/kernel_ridge/kernel_ridge.py](Ridge/kernel_ridge/kernel_ridge.py) | Iris 二分类文本数据 | 核岭回归实现 |
 | Manifold Learning | [ManifoldLearning/DimensionalityReduction_DataVisualizing/data_visualizing.py](ManifoldLearning/DimensionalityReduction_DataVisualizing/data_visualizing.py) | sklearn Digits | PCA、LDA、Isomap、LLE、t-SNE 等降维可视化 |
+| Gradient Boosting | [Boosting/GradientBoosting/gradient_boosting.py](Boosting/GradientBoosting/gradient_boosting.py) | make_moons | 简化版梯度提升树桩实现 |
+| XGBoost | [XGBoost/xgboost_example.py](XGBoost/xgboost_example.py) | sklearn Iris | 工业界常用 boosting，含特征重要性 |
+| LightGBM | [LightGBM/lightgbm_example.py](LightGBM/lightgbm_example.py) | sklearn Iris | 快速 boosting 实现 |
+| Bagging | [Bagging/bagging.py](Bagging/bagging.py) | sklearn Iris | 自助采样 + CART 投票 |
+| CART | [CART/cart.py](CART/cart.py) | sklearn Iris | 基尼系数二叉决策树 |
+| GMM | [GMM/gmm.py](GMM/gmm.py) | sklearn Iris | EM 高斯混合模型，与 KMeans 对比 |
+| Hierarchical Clustering | [HierarchicalClustering/hierarchical_clustering.py](HierarchicalClustering/hierarchical_clustering.py) | sklearn Iris | 层次聚类与树状图 |
+| Mean Shift | [MeanShift/mean_shift.py](MeanShift/mean_shift.py) | sklearn Iris | 密度峰值聚类 |
+| Spectral Clustering | [SpectralClustering/spectral_clustering.py](SpectralClustering/spectral_clustering.py) | sklearn Iris | 谱聚类 |
+| Isolation Forest | [IsolationForest/isolation_forest.py](IsolationForest/isolation_forest.py) | 合成异常数据 | 树模型异常检测 |
+| One-Class SVM | [OneClassSVM/one_class_svm.py](OneClassSVM/one_class_svm.py) | 合成异常数据 | 单类 SVM 异常检测 |
+| Softmax Regression | [SoftmaxRegression/softmax_regression.py](SoftmaxRegression/softmax_regression.py) | sklearn Iris | 多分类逻辑回归 NumPy 实现 |
+| Multiclass Strategies | [MulticlassStrategies/multiclass_strategies.py](MulticlassStrategies/multiclass_strategies.py) | sklearn Iris | One-vs-All 与 One-vs-One |
+| Gaussian Process | [GaussianProcess/gaussian_process.py](GaussianProcess/gaussian_process.py) | 一维合成数据 | 高斯过程回归与不确定度 |
+| Model Evaluation | [Evaluation/model_evaluation.py](Evaluation/model_evaluation.py) | breast_cancer | ROC 曲线、PR 曲线、多模型对比 |
+| Hyperparameter Search | [HyperparameterSearch/hyperparameter_search.py](HyperparameterSearch/hyperparameter_search.py) | sklearn Iris | GridSearchCV 与 RandomizedSearchCV |
+| RNN | [RNN/rnn_classification.py](RNN/rnn_classification.py) | 合成时序 | PyTorch RNN 时序分类 |
+| LSTM | [LSTM/lstm_classification.py](LSTM/lstm_classification.py) | 合成时序 | PyTorch LSTM 时序分类 |
+| GRU | [GRU/gru_classification.py](GRU/gru_classification.py) | 合成时序 | PyTorch GRU 时序分类 |
+| CNN (PyTorch) | [CNN_PyTorch/cnn_mnist.py](CNN_PyTorch/cnn_mnist.py) | MNIST | 简洁 CNN，3 epoch 约 98.8% |
+| Autoencoder | [Autoencoder/autoencoder.py](Autoencoder/autoencoder.py) | MNIST | PyTorch 自编码器降维重构 |
 | Deep Learning Tutorials | [DeepLearning_Tutorials](DeepLearning_Tutorials) | MNIST / Olivetti Faces | 旧版 Theano/Keras 教程存档，运行前需单独准备环境 |
 
 ## 快速运行

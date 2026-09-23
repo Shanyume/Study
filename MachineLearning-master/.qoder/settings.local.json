@@ -4,7 +4,8 @@
       "Bash(cd /home/yl/DL/STUDY/MachineLearning-master/Iris && python iris_classification.py 2>&1 | head -100)",
       "Bash(mkdir:*)",
       "Bash(cd /home/yl/DL/STUDY/MachineLearning-master/LinearRegression && python3 linear_regression.py)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(python3 linear_regression.py 2>&1 | head -50)"
     ]
   }
 }

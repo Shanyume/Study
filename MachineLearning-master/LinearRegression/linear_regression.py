@@ -46,11 +46,18 @@ class LinearRegression:
         在 X 前面拼接一列 1，将偏置合并到权重向量中
         """
         m = X.shape[0]
+        # 在特征矩阵 X 左侧拼接一列全 1 向量，用于将偏置 b 合并到权重向量中
+        # 拼接后 X_b 的形状为 (m, n+1)，第一列全为 1
         X_b = np.hstack([np.ones((m, 1)), X])  # (m, n+1)
 
-        # w = (X^T X)^(-1) X^T y
+        # 正规方程解析解：w = (X^T X)^(-1) X^T y
+        # X_b.T @ X_b 计算 X 的转置乘以 X，得到 (n+1, n+1) 的方阵
+        # np.linalg.inv() 对该方阵求逆
+        # 再右乘 X_b.T @ y 得到最终的权重向量（含偏置）
         self.weights = np.linalg.inv(X_b.T @ X_b) @ X_b.T @ y
+        # 权重向量的第一个元素是偏置 b（对应拼接的那列 1）
         self.bias = self.weights[0]
+        # 剩余元素是各特征的权重 w1, w2, ..., wn
         self.weights = self.weights[1:]
 
     def _fit_gradient_descent(self, X, y, lr, n_iters):
@@ -58,23 +65,31 @@ class LinearRegression:
         批量梯度下降求解
         """
         m, n = X.shape
+        # 初始化权重向量为零向量，偏置为 0
         self.weights = np.zeros(n)
         self.bias = 0.0
 
+        # 记录每次迭代的代价函数值，用于观察收敛情况
         cost_history = []
 
         for i in range(n_iters):
+            # 计算当前参数下的预测值：y_pred = X @ w + b
             y_pred = X @ self.weights + self.bias
+            # 计算预测值与真实值的误差向量
             error = y_pred - y
 
-            # 计算代价（MSE）
+            # 计算均方误差代价函数：J(w,b) = (1/2m) * Σ(y_pred - y)²
+            # 乘以 1/2 是为了后续求导时消去平方项的系数 2，简化计算
             cost = (1 / (2 * m)) * np.sum(error ** 2)
             cost_history.append(cost)
 
-            # 更新参数
+            # 计算代价函数对权重 w 的偏导数：dw = (1/m) * X^T @ error
+            # X.T 形状为 (n, m)，error 形状为 (m,)，结果 dw 形状为 (n,)
             dw = (1 / m) * (X.T @ error)
+            # 计算代价函数对偏置 b 的偏导数：db = (1/m) * Σ(error)
             db = (1 / m) * np.sum(error)
 
+            # 沿梯度反方向更新参数，lr 为学习率控制步长
             self.weights -= lr * dw
             self.bias -= lr * db
 
@@ -94,14 +109,20 @@ class LinearRegression:
     def score(self, X, y):
         """
         计算 R² 决定系数
+        R² = 1 - SS_res / SS_tot
+        其中 SS_res 是残差平方和，SS_tot 是总平方和
+        R² 越接近 1 表示模型拟合越好
         :param X: 特征矩阵
         :param y: 真实目标值
         :return: R² 值，越接近 1 越好
         """
         y = np.array(y, dtype=np.float64).reshape(-1)
         y_pred = self.predict(X)
+        # SS_res（残差平方和）：预测值与真实值之差的平方和，衡量模型未能解释的方差
         ss_res = np.sum((y - y_pred) ** 2)
+        # SS_tot（总平方和）：真实值与均值之差的平方和，衡量数据的总方差
         ss_tot = np.sum((y - np.mean(y)) ** 2)
+        # R² = 1 - SS_res/SS_tot，表示模型解释的方差占总方差的比例
         return 1 - ss_res / ss_tot
 
 
@@ -186,11 +207,22 @@ def demo_plot():
 def generate_multivariate_data(m=100, n_features=5, noise=1.0, seed=42):
     """
     生成多变量模拟数据：y = w0 + w1*x1 + ... + wn*xn + 噪声
+    :param m: 样本数量
+    :param n_features: 特征数量
+    :param noise: 噪声标准差
+    :param seed: 随机种子，保证结果可复现
+    :return: X 特征矩阵, y 目标值, true_weights 真实权重, true_bias 真实偏置
     """
     np.random.seed(seed)
+    # 生成标准正态分布的特征矩阵，形状 (m, n_features)
     X = np.random.randn(m, n_features)
+    # 随机生成真实权重向量，乘以 10 放大数值范围
     true_weights = np.random.randn(n_features) * 10
+    # 随机生成真实偏置，乘以 5 放大数值范围
     true_bias = np.random.randn() * 5
+    # 生成目标值：y = X @ w + b + 噪声
+    # X @ true_weights 计算每个样本的线性组合，形状 (m,)
+    # np.random.randn(m) * noise 添加高斯噪声
     y = X @ true_weights + true_bias + np.random.randn(m) * noise
     return X, y, true_weights, true_bias
 
@@ -230,6 +262,8 @@ def benchmark_multivariate():
 
         # 梯度下降（需要调整学习率以适应特征数）
         model_gd = LinearRegression()
+        # 学习率随特征数增加而减小，防止梯度爆炸导致发散
+        # 经验公式：lr = base_lr / sqrt(n_features)
         lr = 0.01 / np.sqrt(n_features)  # 根据特征数调整学习率
         start = time.time()
         model_gd.fit(X, y, method='gradient_descent', lr=lr, n_iters=5000)
