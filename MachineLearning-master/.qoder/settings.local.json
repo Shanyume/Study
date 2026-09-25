@@ -5,7 +5,10 @@
       "Bash(mkdir:*)",
       "Bash(cd /home/yl/DL/STUDY/MachineLearning-master/LinearRegression && python3 linear_regression.py)",
       "Bash(python3:*)",
-      "Bash(python3 linear_regression.py 2>&1 | head -50)"
+      "Bash(python3 linear_regression.py 2>&1 | head -50)",
+      "Bash(find /home/yl/DL/STUDY/MachineLearning-master -name '*.py' -printf '%h\\\\n' | sort | uniq -c | sort -rn)",
+      "Bash(ls:*)",
+      "Bash(cd /home/yl/DL/STUDY/MachineLearning-master && find . -name \"*.py\" -type f | while read f; do\n  total=$\\(wc -l < \"$f\"\\)\n  # Skip empty files and files with fewer than 20 lines\n  if [ \"$total\" -lt 20 ]; then\n    continue\n  fi\n  \n  # Count comment lines: lines where first non-whitespace char is #, excluding shebang \\(#!\\)\n  comment_lines=$\\(grep -cP '^\\\\s*#\\(?!!\\)' \"$f\" 2>/dev/null || echo 0\\)\n  \n  # Count docstring lines using a python one-liner for accuracy\n  docstring_lines=$\\(python3 -c \"\nimport ast, sys\ntry:\n    with open\\('$f', 'r'\\) as fh:\n        source = fh.read\\(\\)\n    tree = ast.parse\\(source\\)\n    count = 0\n    for node in ast.walk\\(tree\\):\n        if isinstance\\(node, \\(ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module\\)\\):\n            if \\(node.body and isinstance\\(node.body[0], ast.Expr\\) and\n                isinstance\\(node.body[0].value, \\(ast.Constant, ast.Str\\)\\)\\):\n                doc_node = node.body[0].value\n                if hasattr\\(doc_node, 'value'\\) and isinstance\\(doc_node.value, str\\):\n                    lines = doc_node.value.split\\('\\\\n'\\)\n                    count += len\\(lines\\)\n                elif hasattr\\(doc_node, 's'\\):\n                    lines = doc_node.s.split\\('\\\\n'\\)\n                    count += len\\(lines\\)\n    print\\(count\\)\nexcept:\n    print\\(0\\)\n\" 2>/dev/null\\)\n  \n  total_comment=$\\(\\(comment_lines + docstring_lines\\)\\)\n  \n  if [ \"$total\" -gt 0 ]; then\n    pct=$\\(python3 -c \"print\\(f'{\\($total_comment / $total\\) * 100:.1f}'\\)\"\\)\n  else\n    pct=\"0.0\"\n  fi\n  \n  echo \"$pct|$f|$total|$total_comment\"\ndone | sort -t'|' -k1 -n | head -15)"
     ]
   }
 }
