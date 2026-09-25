@@ -43,6 +43,7 @@ class DecisionStump:
 
             for threshold in thresholds:
                 for polarity in [1, -1]:
+                    # polarity=1: x<=t 判为 -1；polarity=-1: x>t 判为 -1（两种划分方向都试）
                     predictions = np.ones(n_samples)
                     if polarity == 1:
                         predictions[X[:, feature_idx] <= threshold] = -1
@@ -59,6 +60,7 @@ class DecisionStump:
                         self.polarity = polarity
 
     def predict(self, X):
+        # 按训练得到的 (feature_idx, threshold, polarity) 输出 +1/-1 判定
         n_samples = X.shape[0]
         predictions = np.ones(n_samples)
 
@@ -77,6 +79,7 @@ class AdaBoost:
     """
 
     def __init__(self, n_estimators=50):
+        # n_estimators：弱学习器（决策树桩）数量，即 Boosting 迭代轮数 M
         self.n_estimators = n_estimators
         self.stumps = []
 
@@ -100,11 +103,13 @@ class AdaBoost:
 
             # 计算分类器权重（alpha）
             # alpha = 0.5 * ln((1-error)/error)，错误率越低权重越大
+            # 1e-10 防止 error 为 0 时除零
             alpha = 0.5 * np.log((1 - error) / (error + 1e-10))
             stump.alpha = alpha
 
             # 更新样本权重
             # 正确分类的样本权重降低，错误分类的样本权重升高
+            # AdaBoost.M1 权重更新公式：w_i <- w_i * exp(-alpha * y_i * f_i(x_i))
             for i in range(n_samples):
                 if predictions[i] == y[i]:
                     weights[i] *= np.exp(-alpha)
@@ -112,18 +117,22 @@ class AdaBoost:
                     weights[i] *= np.exp(alpha)
 
             # 归一化权重
+            # 除以归一化常数 Z = Σ w_i，保持权重构成概率分布
             weights /= np.sum(weights)
 
             self.stumps.append(stump)
 
     def predict(self, X):
         # 加权投票
+        # 每个树桩的预测乘以其权重 alpha，构成加权和
         stump_predictions = np.array([stump.predict(X) * stump.alpha
                                       for stump in self.stumps])
         # 求和并取符号
+        # 即最终模型 f(x) = Σ_m alpha_m * h_m(x)，y = sign(f(x))
         return np.sign(np.sum(stump_predictions, axis=0))
 
     def score(self, X, y):
+        # 准确率 = 预测正确的样本数 / 总样本数
         predictions = self.predict(X)
         return np.mean(predictions == y)
 
@@ -140,6 +149,7 @@ def demo():
     print("=" * 50)
 
     # 生成模拟数据（二分类，标签为 -1 和 1）
+    # n_informative=10：20 个特征中 10 个携带信息量，其余为冗余/噪声特征
     X, y = make_classification(n_samples=1000, n_features=20, n_classes=2,
                                n_informative=10, random_state=42)
     # 将标签转换为 -1 和 1

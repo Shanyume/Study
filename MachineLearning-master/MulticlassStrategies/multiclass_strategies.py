@@ -25,11 +25,16 @@ def main():
     Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, stratify=y, random_state=42)
 
     # One-vs-All：k 个类别训练 k 个二分类器
+    # 每个二分类器学习"类别 c vs 其余所有类别"（二分类标签为 {c} vs {非c}），
+    # 预测时对每个分类器得分取最大者（等价于取概率最大类）
+    # max_iter=1000 提高 LBFGS 最大迭代次数，避免逻辑回归不收敛警告
     ova = OneVsRestClassifier(LogisticRegression(max_iter=1000))
     ova.fit(Xtr, ytr)
     print("OvA test acc:", ova.score(Xte, yte))
 
     # One-vs-One：k*(k-1)/2 个二分类器
+    # 每对类别 (c_i, c_j) 只训练一个"两者二分类"，预测时多数表决
+    # OvO 训练规模小（每个子问题只用两类样本）、预测时需 O(k^2) 次分类
     ovo = OneVsOneClassifier(LogisticRegression(max_iter=1000))
     ovo.fit(Xtr, ytr)
     print("OvO test acc:", ovo.score(Xte, yte))

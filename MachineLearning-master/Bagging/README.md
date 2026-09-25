@@ -7,3 +7,7 @@
 ## 说明
 
 自助采样训练多个 CART 决策树，最后投票，是 Random Forest 的基础。
+
+## 结果图
+
+![Bagging vs Single Tree](bagging_vs_single_tree.png)

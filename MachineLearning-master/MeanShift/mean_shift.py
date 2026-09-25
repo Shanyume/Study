@@ -24,9 +24,13 @@ def main():
     X, y = load_iris(return_X_y=True)
 
     # 自动估计带宽参数（决定邻域大小）
+    # bandwidth 是核半径：太大时不同簇的密度盆合并、簇数偏少；太小则噪声敏感、簇数偏多
+    # quantile 越小，选出的带宽越小
     bandwidth = estimate_bandwidth(X, quantile=0.3, random_state=42)
     model = MeanShift(bandwidth=bandwidth, bin_seeding=True)
+    # bin_seeding=True：只把网格（bin）中心作为移动起点，大幅减少迭代次数
     labels = model.fit_predict(X)
+    # 簇数由数据本身的密度结构决定：收敛到不同密度峰值的点构成一个簇
 
     print("n_clusters:", len(model.cluster_centers_))  # 自动发现的簇数
     # ARI：调整兰德指数，聚类标签与真实标签的一致性

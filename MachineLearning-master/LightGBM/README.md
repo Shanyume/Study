@@ -7,3 +7,7 @@
 ## 说明
 
 基于直方图的快速梯度提升实现，适合大数据集，示例包含准确率和特征重要性。
+
+## 结果图
+
+![LightGBM Feature Importance](lgbm_feature_importance.png)

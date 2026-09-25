@@ -19,6 +19,8 @@ class CARTClassifier:
 
     def _gini(self, y):
         """计算标签数组 y 的基尼不纯度：1 - Σ p_k^2，值越小说明类别越纯。"""
+        # 直觉：Gini 等价于从该集合中随机取两个样本、二者类别不同的概率
+        # 全纯（单类）时为 0，均匀分布时最大
         _, counts = np.unique(y, return_counts=True)  # 统计各类别出现的次数
         p = counts / len(y)                           # 各类别的占比 p_k
         return 1 - np.sum(p ** 2)
@@ -34,6 +36,7 @@ class CARTClassifier:
                 left, right = y[X[:, j] <= t], y[X[:, j] > t]  # 按 x_j <= t 划分左右子集的标签
                 if len(left) < self.min_split or len(right) < self.min_split: continue  # 任一侧样本过少则跳过
                 # 按样本量加权的基尼不纯度
+                # 即分裂后子集的不纯度期望 (|L|*Gini(L)+|R|*Gini(R))/|S|，越小越好
                 g = (len(left)*self._gini(left) + len(right)*self._gini(right)) / len(y)
                 if g < best[2]: best = (j, t, g)      # 更新最优划分
         return best
@@ -58,6 +61,7 @@ class CARTClassifier:
         """对单个样本 x，从给定节点出发沿树下行，返回落入叶子节点的类别标签。"""
         while not node["leaf"]:
             # 根据划分特征与阈值决定走向左子树还是右子树
+            # CART 为二叉树，路径长度即从根到叶的分裂次数（树的深度决定上界）
             node = node["left"] if x[node["j"]] <= node["t"] else node["right"]
         return node["label"]
 

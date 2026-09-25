@@ -28,6 +28,8 @@ def main():
     #   learning_rate: 学习率，越小越保守
     #   subsample: 每棵树采样比例（行采样）
     #   colsample_bytree: 每棵树特征采样比例（列采样）
+    # 默认目标函数为 multi:softmax（多分类 softmax），
+    # eval_metric="mlogloss" 即多分类 log 损失，用于训练过程中的评估
     model = XGBClassifier(
         n_estimators=100, max_depth=3, learning_rate=0.1,
         subsample=0.8, colsample_bytree=0.8, eval_metric="mlogloss"
@@ -35,11 +37,13 @@ def main():
     model.fit(Xtr, ytr)
 
     # 预测和评估
+    # classification_report 给出每个类别的 precision / recall / F1 分数
     pred = model.predict(Xte)
     print("test acc:", accuracy_score(yte, pred))
     print(classification_report(yte, pred))
 
     # 特征重要性：每个特征对模型贡献度
+    # 默认 importance_type="split"，按各特征被选为分裂点的次数统计
     print("feature importance:", model.feature_importances_)
 
 

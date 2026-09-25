@@ -61,6 +61,7 @@ class GMM:
         self.pi = np.ones(self.k) / self.k  # 混合系数均匀初始化
 
         prev_ll = -np.inf
+        # EM 迭代：E 步与 M 步交替，直到对数似然变化小于 tol 或达到 max_iter
         for _ in range(self.max_iter):
             # ---- E-step：计算响应度 ----
             resp = np.zeros((n, self.k))
@@ -77,6 +78,7 @@ class GMM:
             for i in range(self.k):
                 diff = X - self.mu[i]
                 # 加权协方差 + 正则化项防止奇异
+                # (x-μ) 外积按 resp 加权求和，等价于对 Σ_n resp·(x-μ)(x-μ)^T / Nk
                 self.cov[i] = (resp[:, i][:, None] * diff).T @ diff / Nk[i] + 1e-6*np.eye(d)  # # 加权协方差 + 正则化防止奇异
 
             # 计算对数似然，判断收敛
@@ -88,12 +90,14 @@ class GMM:
                 break
             prev_ll = ll
 
+        # resp: 每个样本属于每个分量的后验概率（软分配），shape (n, k)
         self.resp = resp
         return self
 
     def predict(self, X):
         """返回每个样本最可能的高斯分量索引。"""
         """返回每个样本最可能的高斯分量索引。"""
+        # 取 π_k·N(x|μ_k,Σ_k) 最大的分量作为该样本的硬聚类标签
         X = np.asarray(X)
         probs = np.array([
             self.pi[i] * multivariate_normal.pdf(X, self.mu[i], self.cov[i])
@@ -112,6 +116,7 @@ def best_label_mapping(y_true, y_pred, k):
     """
     from itertools import permutations
     best_acc = 0
+    # 枚举 k! 种簇编号排列，把聚类标签重映射到最接近真实标签的那种
     for perm in permutations(range(k)):
         mapped = np.array([perm[p] for p in y_pred])
         acc = accuracy_score(y_true, mapped)

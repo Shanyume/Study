@@ -8,3 +8,7 @@
 ## 说明
 
 逐轮拟合当前模型负梯度（残差），逐步修正错误，是 XGBoost / LightGBM 的基础思想。
+
+## 结果图
+
+![GB Decision Boundary](gb_decision_boundary.png)

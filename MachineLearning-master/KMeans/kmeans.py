@@ -48,6 +48,7 @@ class KMeans(object):
             最大迭代次数
     """
     def __init__(self,n_clusters=5,initCent='random',max_iter=300):
+        # 若 initCent 是数组，则直接以其为初始质心，k 取数组行数
         if hasattr(initCent, '__array__'):
             n_clusters = initCent.shape[0]
             self.centroids = np.asarray(initCent, dtype=np.float64)
@@ -90,9 +91,11 @@ class KMeans(object):
              self.centroids = self._randCent(X, self.n_clusters)
         
         clusterChanged = True
+        # 收敛标志：一轮分配中有任意样本换簇则继续迭代
         # 迭代最多 max_iter 次
         for _ in range(self.max_iter):
             clusterChanged = False
+            # 每轮重置收敛标志，下面若有样本换簇会重新置 True
             # 分配步骤：每个样本点找最近的质心
             for i in range(m):
                 minDist = np.inf; minIndex = -1
@@ -111,7 +114,9 @@ class KMeans(object):
                 ptsInClust = X[np.nonzero(self.clusterAssment[:,0]==i)[0]]  # # 取出属于第 i 个簇的所有样本#取出属于第i个族的所有点
                 self.centroids[i,:] = np.mean(ptsInClust, axis=0)  # # 用簇内样本均值更新质心
         
+        # labels: 每个样本的簇索引（浮点型，做索引前需 astype(int)）
         self.labels = self.clusterAssment[:,0]
+        # sse（SSE）: 全部样本到所属质心平方距离之和，越小聚类越紧凑
         self.sse = sum(self.clusterAssment[:,1])
 
     
@@ -136,7 +141,18 @@ class KMeans(object):
     
     
 class biKMeans(object):
+    """
+    biKMeans（二分 KMeans）：对普通 KMeans 的改进，采用自顶向下贪心分裂。
+
+    1. 初始所有样本为一个簇，质心为全体样本均值
+    2. 每轮用普通 KMeans 试探把每个现存簇一分为二
+    3. 计算每次分裂后的总 SSE（样本到质心平方距离之和）
+    4. 只保留使总 SSE 最小的那次分裂，直到簇数达到 n_clusters
+
+    优点：贪心分裂策略降低了 KMeans 对质心初始化和局部极小值的敏感度。
+    """
     def __init__(self,n_clusters=5):
+        # 目标簇数：质心表 centList 达到该数量时停止分裂
         self.n_clusters = n_clusters
         self.centroids = None
         self.clusterAssment = None
@@ -149,14 +165,17 @@ class biKMeans(object):
         return np.linalg.norm(vecA - vecB)
         
     def fit(self,X):
+        # 初始化：所有样本都属于簇 0，质心取全体样本均值
         m = X.shape[0]
         self.clusterAssment = np.zeros((m,2))
         centroid0 = np.mean(X, axis=0).tolist()
         centList =[centroid0]
+        # centList 存放各簇质心；clusterAssment[:,0] 初始全 0，表示所有样本都在簇 0
         for j in range(m):#计算每个样本点与质心之间初始的平方误差
             self.clusterAssment[j,1] = self._distEclud(np.asarray(centroid0), X[j,:])**2
         
         while (len(centList) < self.n_clusters):
+            # 试探分裂：枚举每个现存簇，寻找使总 SSE 最小的分裂方案
             lowestSSE = np.inf
             for i in range(len(centList)):#尝试划分每一族,选取使得误差最小的那个族进行划分
                 ptsInCurrCluster = X[np.nonzero(self.clusterAssment[:,0]==i)[0],:]
@@ -164,8 +183,11 @@ class biKMeans(object):
                 clf.fit(ptsInCurrCluster)
                 centroidMat, splitClustAss = clf.centroids, clf.clusterAssment#划分该族后，所得到的质心、分配结果及误差矩阵
                 sseSplit = sum(splitClustAss[:,1])
+                # sseSplit: 被分裂簇内部样本的总平方误差（分裂后）
                 sseNotSplit = sum(self.clusterAssment[np.nonzero(self.clusterAssment[:,0]!=i)[0],1])
+                # sseNotSplit: 其余簇样本的总平方误差（本次分裂不影响它们）
                 if (sseSplit + sseNotSplit) < lowestSSE:
+                    # 该分裂后的总 SSE 小于目前最优，记录这个最优分裂方案
                     bestCentToSplit = i
                     bestNewCents = centroidMat
                     bestClustAss = splitClustAss.copy()
@@ -173,10 +195,13 @@ class biKMeans(object):
             #该族被划分成两个子族后,其中一个子族的索引变为原族的索引，另一个子族的索引变为len(centList),然后存入centList
             bestClustAss[np.nonzero(bestClustAss[:,0] == 1)[0],0] = len(centList)
             bestClustAss[np.nonzero(bestClustAss[:,0] == 0)[0],0] = bestCentToSplit
+            # 更新质心表：原簇质心改为 bestNewCents[0]，bestNewCents[1] 作为新簇质心追加
             centList[bestCentToSplit] = bestNewCents[0,:].tolist()
             centList.append(bestNewCents[1,:].tolist())
+            # 把被分裂簇样本的新分配结果（簇索引 + 到质心平方误差）写回 clusterAssment
             self.clusterAssment[np.nonzero(self.clusterAssment[:,0] == bestCentToSplit)[0],:]= bestClustAss 
                    
+        # 簇数达标，整理最终结果
         self.labels = self.clusterAssment[:,0] 
         self.sse = sum(self.clusterAssment[:,1])
         self.centroids = np.asarray(centList)

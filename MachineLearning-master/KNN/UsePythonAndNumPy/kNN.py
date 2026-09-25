@@ -63,6 +63,16 @@
 
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+kNN（K 近邻）算法的 NumPy 手写实现，并用 32×32 手写数字数据集做识别演示。
+
+算法思想（无显式训练过程，属于惰性学习，全部计算发生在预测时）：
+1. 距离度量：计算待分类样本与训练集中每个样本的欧氏距离
+       d(x, y) = sqrt( sum_i (x_i - y_i)^2 )
+2. 近邻查找：按距离升序排序，取前 k 个最近的邻居
+3. 多数表决：这 k 个邻居按各自类别投票，票数最多的类别作为预测结果
+   （k 通常取较小的奇数，可避免平票，如 k=3）
+"""
 
 import os
 import operator
@@ -85,13 +95,17 @@ def classify0(inX, dataSet, labels, k):
         raise ValueError("输入样本维度与训练数据不一致")
 
     dataSetSize = dataSet.shape[0]
+    # 训练样本总数 m
     # 计算欧氏距离（使用 broadcasting）
+    # 对应公式 d(inX, x_j) = sqrt( sum_i (inX_i - x_ji)^2 )
+    # 实现步骤：广播相减得到 (m×n) 差值矩阵 -> 逐元素平方 -> 按行求和 -> 开根号
     diffMat = np.tile(inX, (dataSetSize, 1)) - dataSet
     sqDiffMat = diffMat ** 2
     sqDistances = sqDiffMat.sum(axis=1)
     distances = sqDistances ** 0.5
     sortedIndices = distances.argsort()   # 按距离升序排列的索引
 
+    # 多数表决：依次取出距离最近的 k 个邻居，统计它们各自类别的票数
     classCount = {}
     for i in range(k):
         voteLabel = labels[sortedIndices[i]]
@@ -99,6 +113,7 @@ def classify0(inX, dataSet, labels, k):
 
     # 按投票数降序排列
     sortedClassCount = sorted(classCount.items(), key=operator.itemgetter(1), reverse=True)
+    # 取票数最多的类别标签作为预测结果（平票时取排序靠前者）
     return sortedClassCount[0][0]
 
 
@@ -109,6 +124,7 @@ def img2vector(filename):
     :return: 1×1024 的 numpy 数组
     """
     returnVect = np.zeros((1, 1024))
+    # 32×32 的图像按行主序展平为 1024 维特征向量
     try:
         with open(filename, 'r') as fr:
             for i in range(32):
@@ -117,6 +133,8 @@ def img2vector(filename):
                     break
                 # 确保每行至少 32 个字符（去掉换行符）
                 lineStr = lineStr.strip()
+                # 每行 32 个字符：'8' 表示黑像素（笔画），'0' 表示白像素（背景）
+                # 第 i 行第 j 列的像素放入向量下标 32*i + j（行主序）
                 for j in range(min(32, len(lineStr))):
                     returnVect[0, 32 * i + j] = int(lineStr[j])
     except FileNotFoundError:
@@ -148,6 +166,7 @@ def handwritingClassTest(k=3, train_dir='trainingDigits', test_dir='testDigits')
     if test_dir is None:
         test_dir = os.path.join(script_dir, 'testDigits')
     # ---------- 加载训练集 ----------
+    # 训练文件命名约定："类别数字_样本序号.txt"，如 "0_1.txt" 表示数字 0 的第 1 个样本
     hwLabels = []
     try:
         trainingFileList = [f for f in os.listdir(train_dir)
@@ -184,6 +203,7 @@ def handwritingClassTest(k=3, train_dir='trainingDigits', test_dir='testDigits')
         print("测试目录中没有找到 .txt 文件")
         return
 
+    # 逐个测试样本：图像向量化 -> kNN 预测 -> 与真实类别比对并累计错误数
     errorCount = 0.0
     for fileNameStr in testFileList:
         fileStr = fileNameStr.split('.')[0]
@@ -201,12 +221,14 @@ def handwritingClassTest(k=3, train_dir='trainingDigits', test_dir='testDigits')
         if classifierResult != classNumStr:
             errorCount += 1.0
 
+    # 错误率 = 错误样本数 / 测试样本总数，衡量该 kNN 模型在测试集上的错误水平
     print(f"\n总错误数: {int(errorCount)}")
     print(f"错误率: {errorCount / float(mTest):.4f} ({errorCount}/{mTest})")
 
 
 if __name__ == '__main__':
     # 只调用一次，传入绝对路径
+    # 此处 k=3，即取 3 个最近邻做多数表决
     base_dir = os.path.dirname(os.path.abspath(__file__))
     handwritingClassTest(k=3,
                          train_dir=os.path.join(base_dir, 'trainingDigits'),

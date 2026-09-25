@@ -7,3 +7,7 @@
 ## 说明
 
 多分类逻辑回归，交叉熵损失 + L2 正则，NumPy 实现。
+
+## 结果图
+
+![Softmax Boundary](softmax_boundary.png)

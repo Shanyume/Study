@@ -51,17 +51,19 @@ class KernelRidge():
         :param C: Value of regularization parameter C
         :param gamma: parameter for gaussian kernel or Polynomial kernel
         """
-        self.kernels = {
+        self.kernels = {  # # 核函数注册表：字符串类型 -> 对应的核函数方法
             'linear': self.kernel_linear,
             'quadratic': self.kernel_quadratic,
             'gaussian': self.kernel_gaussian
         }
         self.kernel_type = kernel_type
-        self.kernel = self.kernels[self.kernel_type]
+        self.kernel = self.kernels[self.kernel_type]  # # 按类型选定本次使用的核函数
         self.C = C
         self.gamma = gamma
 
     # 定义核函数
+    # # 核函数把输入映射到更高维（或隐式）空间中的内积，
+    # # 使回归可以在特征空间中进行而无需显式变换
     def kernel_linear(self, x1, x2):
         """线性核：K(x1, x2) = x1 · x2^T。"""
         return np.dot(x1, x2.T)
@@ -72,6 +74,7 @@ class KernelRidge():
 
     def kernel_gaussian(self, x1, x2, gamma=5.0):
         """高斯核：K(x1, x2) = exp(-||x1-x2||² / (2σ²))，σ = gamma。"""
+        # # gamma 越大，核值衰减越快（模型更平滑、更易欠拟合）
         gamma = self.gamma
         return np.exp(-linalg.norm(x1 - x2) ** 2 / (2 * (gamma ** 2)))
 
@@ -81,11 +84,11 @@ class KernelRidge():
         """
 
         # sample size
-        n1 = X1.shape[0]
-        n2 = X2.shape[0]
+        n1 = X1.shape[0]  # # X1 的样本数（核矩阵行数）
+        n2 = X2.shape[0]  # # X2 的样本数（核矩阵列数）
 
         # Gram matrix
-        K = np.zeros((n1, n2))
+        K = np.zeros((n1, n2))  # # 核矩阵：K[i, j] = kernel(X1[i], X2[j])
         for i in range(n1):
             for j in range(n2):
                 K[i, j] = self.kernel(X1[i], X2[j])
@@ -101,8 +104,10 @@ class KernelRidge():
         :param y: 训练目标值 (n_samples, 1)
         :return: alpha 系数
         """
-        K = self.compute_kernel_matrix(X, X)
+        K = self.compute_kernel_matrix(X, X)  # # 训练集上的核矩阵
 
+        # # 推导：min 1/2 alpha^T K alpha + C ||alpha||^2 - alpha^T y
+        # #        令导数为 0 得 (K + C*I) alpha = y
         self.alphas = np.dot(inv(K + self.C * np.eye(np.shape(K)[0])),  # # 闭式解：alpha = (K + C*I)^(-1) * y
                         y)
 
@@ -125,8 +130,9 @@ class KernelRidge():
         :return: y_test, D2xNte array
         """
 
-        k = self.compute_kernel_matrix(x_test, x_train)
+        k = self.compute_kernel_matrix(x_test, x_train)  # # 核矩阵：K(x_test, x_train)，形状 (n_test, n_train)
 
         y_test = np.dot(k, self.alphas)  # # 预测：K(x_test, x_train) @ alpha
+        # # 即 f(x) = Σ_j alpha_j * K(x, x_j)，由核表示定理在特征空间中线性组合训练样本
         return y_test
 

@@ -39,10 +39,14 @@ class SoftmaxRegression:
         :param n_iters: 最大迭代次数
         :param l2: L2 正则强度
         """
+        # lr：学习率（全批量梯度下降的步长）
+        # n_iters：迭代轮数
+        # l2：正则系数 λ，惩罚权重范数 ||W||²，抑制过拟合
         self.lr = lr; self.n_iters = n_iters; self.l2 = l2
 
     def _softmax(self, z):
         """数值稳定的 softmax：减去每行最大值防止 exp 溢出。"""
+        # softmax 平移不变：每行减同一常数后比值不变，故减 max 不改变结果
         z = z - z.max(axis=1, keepdims=True)  # # 减去每行最大值，防止 exp 溢出
         e = np.exp(z)
         return e / e.sum(axis=1, keepdims=True)  # # softmax：指数归一化为概率分布
@@ -51,19 +55,25 @@ class SoftmaxRegression:
         """全批量梯度下降训练 softmax 回归。"""
         X = np.asarray(X); y = np.asarray(y)
         n, d = X.shape
+        # k 为类别数，W 的列数与 k 对应：第 k 列 w_k 负责类别 k 的打分
         self.k = len(np.unique(y))  # 类别数
         # one-hot 编码标签
+        # Y 形状 (n, k)，Y[i, c] = 1 当且仅当第 i 个样本属于类别 c
         Y = np.eye(self.k)[y]
         # 初始化权重和偏置
+        # W: (d, k)，每个类别一组权重；b: (k,)，每个类别一个偏置
         self.W = np.zeros((d, self.k))
         self.b = np.zeros(self.k)
         for _ in range(self.n_iters):
             # 前向：计算概率 P(y=k|x)
+            # z = XW + b 形状 (n, k)，z[i, k] 为样本 i 对类别 k 的打分
             P = self._softmax(X @ self.W + self.b)
             # 梯度：交叉熵对 W 和 b 的偏导 + L2 正则
+            # 交叉熵与 softmax 组合后梯度形式极简洁：(P - Y)/n（预测概率减真实 one-hot）
             grad_w = X.T @ (P - Y) / n + self.l2 * self.W  # # 交叉熵梯度 + L2 正则
             grad_b = (P - Y).mean(axis=0)  # # 偏置梯度
             # 更新参数
+            # 注意偏置 b 不加 L2 正则（常规做法，正则只约束权重）
             self.W -= self.lr * grad_w  # # 沿负梯度方向更新权重
             self.b -= self.lr * grad_b  # # 更新偏置
         return self
@@ -74,6 +84,7 @@ class SoftmaxRegression:
 
     def predict(self, X):
         """返回概率最大的类别。"""
+        # 极大后验（MAP）决策：取 argmax_k P(y=k|x)，等价于最小化 0-1 损失
         return self.predict_proba(X).argmax(axis=1)  # # 返回概率最大的类别
 
 

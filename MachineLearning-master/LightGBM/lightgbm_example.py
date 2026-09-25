@@ -26,9 +26,11 @@ def main():
     #   max_depth: 最大深度
     #   learning_rate: 学习率
     #   verbose: 小于 0 关闭训练日志
+    # LightGBM 默认目标函数为 multi:softmax（多分类），与 XGBoost 一致
     model = LGBMClassifier(n_estimators=100, max_depth=3, learning_rate=0.1, verbose=-1)
     model.fit(Xtr, ytr)
 
+    # 预测与评估：LightGBM 同样按多树加和输出决策值，softmax 后取 argmax
     print("test acc:", accuracy_score(yte, model.predict(Xte)))
     # 特征重要性：基于分裂次数
     print("feature importance:", model.feature_importances_)

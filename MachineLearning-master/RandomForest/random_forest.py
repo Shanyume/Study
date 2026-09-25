@@ -34,6 +34,8 @@ class DecisionTree:
     """
 
     def __init__(self, max_depth=5, min_samples_split=2):
+        # max_depth：限制树的深度，防止过拟合
+        # min_samples_split：节点样本数低于该值时不再分裂
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.tree = None
@@ -42,17 +44,20 @@ class DecisionTree:
         self.tree = self._build_tree(X, y, depth=0)
 
     def _build_tree(self, X, y, depth):
+        # 递归建树：对当前节点样本集寻找最优二元分裂，再分别递归左右子集
         n_samples, n_features = X.shape
         n_labels = len(np.unique(y))
 
         # 停止条件：达到最大深度、样本数过少、纯度足够
         if depth >= self.max_depth or n_samples < self.min_samples_split or n_labels == 1:
+            # 叶节点标签取节点内多数类（样本数最多的类别）
             return {'leaf': True, 'label': Counter(y).most_common(1)[0][0]}
 
         # 寻找最佳分裂特征和阈值
         best_feature, best_threshold, best_gini = None, None, float('inf')
 
         for feature_idx in range(n_features):
+            # 候选阈值取该特征的所有不同取值（连续特征按取值切分，x_j <= t 与 x_j > t）
             thresholds = np.unique(X[:, feature_idx])
             for threshold in thresholds:
                 gini = self._calculate_gini(X, y, feature_idx, threshold)
@@ -81,25 +86,31 @@ class DecisionTree:
         }
 
     def _calculate_gini(self, X, y, feature_idx, threshold):
+        # 按 (feature_idx, threshold) 计算分裂后的加权基尼不纯度
         left_mask = X[:, feature_idx] <= threshold
         right_mask = ~left_mask
 
+        # 任一侧为空集时该分裂无意义，返回 inf 使其不会被选中
         if np.sum(left_mask) == 0 or np.sum(right_mask) == 0:
             return float('inf')
 
+        # 基尼系数 Gini(S) = 1 - Σ_k p_k^2，p_k 为子集 S 中第 k 类的占比
         gini_left = 1 - np.sum([(np.sum(y[left_mask] == c) / np.sum(left_mask)) ** 2
                                 for c in np.unique(y)])
         gini_right = 1 - np.sum([(np.sum(y[right_mask] == c) / np.sum(right_mask)) ** 2
                                  for c in np.unique(y)])
 
         n = len(y)
+        # 加权基尼 = (|L|/n)*Gini(L) + (|R|/n)*Gini(R)，即分裂后的期望不纯度
         gini = (np.sum(left_mask) / n) * gini_left + (np.sum(right_mask) / n) * gini_right  # # 加权基尼系数
         return gini
 
     def predict(self, X):
+        # 逐样本从根节点走到底
         return np.array([self._predict_sample(x, self.tree) for x in X])
 
     def _predict_sample(self, x, tree):
+        # 递归下行：满足 x_j <= t 走左子树，否则走右子树
         if tree['leaf']:
             return tree['label']
         if x[tree['feature']] <= tree['threshold']:
@@ -117,6 +128,7 @@ class RandomForest:
     """
 
     def __init__(self, n_trees=100, max_depth=5, min_samples_split=2, max_features=None):
+        # n_trees：森林中决策树的数量
         self.n_trees = n_trees
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -128,6 +140,7 @@ class RandomForest:
         n_samples, n_features = X.shape
 
         # 默认使用 sqrt(n_features) 个特征
+        # 分类任务经验最优（Breiman 2001）：既保持单棵树有一定能力，又保证树间多样性
         if self.max_features is None:
             self.max_features = int(np.sqrt(n_features))
 
@@ -138,6 +151,8 @@ class RandomForest:
             y_bootstrap = y[indices]
 
             # 随机选择特征子集
+            # 每棵树只用无放回抽出的 max_features 个特征建树——随机森林区别于普通 Bagging 的关键
+            # 该机制去除了树间相关性，从而降低整体方差
             feature_indices = np.random.choice(n_features, self.max_features, replace=False)
             X_subset = X_bootstrap[:, feature_indices]
 
@@ -149,13 +164,16 @@ class RandomForest:
 
     def predict(self, X):
         # 每棵树投票
+        # 每棵树只接收自己训练时使用的特征子集 X[:, features]
         predictions = np.array([tree.predict(X[:, features])
                                 for tree, features in self.trees])
         # 多数投票
+        # 对每个样本（predictions 的一列）统计各类得票，取最多的类别
         return np.array([Counter(col).most_common(1)[0][0]
                          for col in predictions.T])
 
     def score(self, X, y):
+        # 准确率 = 预测正确比例
         predictions = self.predict(X)
         return np.mean(predictions == y)
 

@@ -3,6 +3,21 @@
 Created on Fri Jul 10 22:04:33 2015
 
 @author: wepon
+
+NumPy 手写 ID3 / C4.5 决策树分类器。
+
+核心公式：
+- 信息熵（度量数据集 D 的混乱程度，类别越均匀熵越大）：
+      H(D) = -sum_c p_c * log2(p_c)，其中 p_c 为类别 c 在 D 中的占比
+- 按特征 A 取值 v 划分后的条件熵（各子集熵的加权平均）：
+      H_A(D) = sum_v (|D_v|/|D|) * H(D_v)
+- 信息增益（ID3 的选择标准，选增益最大的特征）：
+      Gain(D, A) = H(D) - H_A(D)
+  缺点：偏向取值多的特征（取值越多越容易把数据切纯，增益越大）
+- 分裂信息（度量特征 A 本身的无序度）：
+      Info_A(D) = -sum_v (|D_v|/|D|) * log2(|D_v|/|D|)
+- 信息增益比（C4.5 的选择标准，相当于对增益做归一化以抑制上述偏向）：
+      GainRatio(D, A) = Gain(D, A) / Info_A(D)
 """
 
 import numpy as np
@@ -35,6 +50,8 @@ class DecisionTree:
         """
         函数功能：计算熵
         参数y：数据集的标签
+        公式：H(y) = -sum_c p_c * log2(p_c)，p_c = 类别 c 的样本数 / 总样本数
+        说明：用 log2 时单位为 bit；若 y 全部属于同一类则 H = 0（完全确定）
         """
         num = y.shape[0]
         #统计y中不同label值的个数，并用字典labelCounts存储
@@ -54,6 +71,8 @@ class DecisionTree:
     def _splitDataSet(self,X,y,index,value):
         """
         函数功能：返回数据集中特征下标为index，特征值等于value的子数据集
+        注意：返回时已删去 index 列——已用于分裂的特征不能再参与后续分裂，
+        同时避免了特征重复使用导致的无限递归
         """
         ret = []
         featVec = X[:,index]
@@ -75,6 +94,8 @@ class DecisionTree:
                 infoGain：信息增益
                 bestInfoGain：记录最大的信息增益
                 bestFeatureIndex：信息增益最大时，所选择的分割特征的下标
+        选择标准：信息增益 Gain = H(y) - sum_v (|D_v|/|D|) * H(D_v)，取最大者
+        局限：信息增益偏向取值数量多的特征，适合取值较少的离散特征
         """
         numFeatures = X.shape[1]
         oldEntropy = self._calcEntropy(y)
@@ -101,6 +122,9 @@ class DecisionTree:
     def _chooseBestFeatureToSplit_C45(self,X,y):
         """C4.5
             ID3算法计算的是信息增益，C4.5算法计算的是信息增益比，对上面ID3版本的函数稍作修改即可
+            增益比 GainRatio = Gain / Info_A，其中分裂信息
+            Info_A(D) = -sum_v (|D_v|/|D|) * log2(|D_v|/|D|)
+            作用：对增益做归一化，消除 ID3 中偏向取值多的特征的缺陷
         """
         numFeatures = X.shape[1]
         oldEntropy = self._calcEntropy(y)
@@ -118,6 +142,7 @@ class DecisionTree:
                 sub_X,sub_y = self._splitDataSet(X,y,i,value)
                 prob = len(sub_y)/float(len(y))
                 newEntropy += prob * self._calcEntropy(sub_y)    # # 累加子集熵
+                # 累加分裂信息 Info_A(D) = -sum_v p_v * log2(p_v)，p_v 为子集占比
                 splitInformation -= prob * np.log2(prob)
             #计算信息增益比，根据信息增益比选择最佳分割特征
             #splitInformation若为0，说明该特征的所有值都是相同的，显然不能作为分割特征
@@ -149,6 +174,10 @@ class DecisionTree:
     def _createTree(self,X,y,featureIndex):
         """建立决策树
         featureIndex，类型是元组，它记录了X中的特征在原始数据中对应的下标。
+        递归终止条件（两者满足其一即生成叶子节点）：
+        1. 当前节点所有样本属于同一类别，直接返回该类别
+        2. 已无可用特征（每个特征只能分裂一次），返回多数类别
+        树的存储结构：嵌套字典 {特征名: {分支取值: 子树字典 或 类别标签}}
         """
         labelList = list(y)
         #所有label都相同的话，则停止分割，返回该label
@@ -189,7 +218,10 @@ class DecisionTree:
             except:
                 raise TypeError("numpy.ndarray required for X,y")
         
+        # 为每个特征生成名字 'x0','x1',...（名字中的数字即原始特征列下标，
+        # 后续 _splitDataSet 逐层删列后仍要靠它回溯到原始列，predict 时也靠它定位）
         featureIndex = tuple(['x'+str(i) for i in range(X.shape[1])])
+        # 自顶向下递归建树
         self._tree = self._createTree(X,y,featureIndex)
         return self  #allow chaining: clf.fit().predict()
 
@@ -214,6 +246,8 @@ class DecisionTree:
             决策树的构建是一个递归的过程，用决策树分类也是一个递归的过程
             _classify()一次只能对一个样本（sample）分类
             To Do: 多个sample的预测怎样并行化？
+            分类过程：沿树逐层向下——取当前节点的特征名，从样本中读出该
+            特征的取值，跳到对应分支；直到遇到叶子（值为类别标签而非字典）即返回
             """
             featIndex = list(tree.keys())[0]
             secondDict = tree[featIndex]

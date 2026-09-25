@@ -68,6 +68,42 @@ python SVM/SVM_by_SMO/testSVM-SMO.py
 python NaiveBayes/test.py
 ```
 
+## 可视化结果
+
+以下是一些模块的可视化输出示例：
+
+### 决策边界对比
+
+| 模块 | 可视化 |
+|---|---|
+| SVM QP | ![SVM QP](SVM/SVM_by_QP/svm_qp_boundary.png) |
+| Gradient Boosting | ![GB](Boosting/GradientBoosting/gb_decision_boundary.png) |
+| Random Forest | ![RF](RandomForest/random_forest_boundary.png) |
+
+### 聚类对比
+
+| 模块 | 可视化 |
+|---|---|
+| KMeans | ![KMeans](KMeans/kmeans_iris.png) |
+| GMM vs KMeans | ![GMM](GMM/gmm_vs_kmeans.png) |
+| DBSCAN | ![DBSCAN](DBSCAN/dbscan_clustering.png) |
+| 层次聚类 | ![Hierarchical](HierarchicalClustering/dendrogram.png) |
+
+### 评估与降维
+
+| 模块 | 可视化 |
+|---|---|
+| ROC/PR 曲线 | ![ROC](Evaluation/roc_pr_curves.png) |
+| PCA | ![PCA](LDA/lda_projection.png) |
+| 高斯过程 | ![GP](GaussianProcess/gp_regression.png) |
+
+### 深度学习
+
+| 模块 | 可视化 |
+|---|---|
+| RNN/LSTM/GRU 对比 | ![RNN](RNN/rnn_lstm_gru_comparison.png) |
+| Autoencoder 重构 | ![Autoencoder](Autoencoder/autoencoder_reconstruction.png) |
+
 ## 统一验证脚本
 
 ```bash

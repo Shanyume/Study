@@ -43,12 +43,14 @@ class DBSCAN:
         """
         n_samples = X.shape[0]
         self.labels = np.full(n_samples, -1)  # 初始化为噪声
+        # -1 约定为噪声点，核心点/边界点后续会被赋予非负簇编号
 
         # 计算所有点对之间的距离矩阵
         distances = self._compute_distance_matrix(X)
 
         # 找出每个点的 eps-邻域
         neighborhoods = []
+        # neighborhoods[i]: 距离 i 不超过 eps 的所有点的索引（含 i 自身）
         for i in range(n_samples):
             neighbors = np.where(distances[i] <= self.eps)[0]  # # 找出 eps 邻域内所有点的索引
             neighborhoods.append(neighbors)
@@ -65,6 +67,7 @@ class DBSCAN:
                 continue  # 噪声点，暂时标记为 -1
 
             # 开始新簇
+            # 核心点触发 BFS 扩展，把与之密度可达的点都划入当前簇
             self._expand_cluster(i, neighborhoods, cluster_id)
             cluster_id += 1
 
@@ -81,6 +84,8 @@ class DBSCAN:
         while queue:
             current = queue.pop(0)
             neighbors = neighborhoods[current]
+            # 只有核心点的邻居才会继续触发扩展（边界点本身不再向外扩张），
+            # 这样簇会沿"密度可达"的链条自动延伸，直到遇到稀疏区域停止
 
             # 如果当前点是核心点，将其邻居加入队列
             if len(neighbors) >= self.min_samples:
@@ -99,6 +104,7 @@ class DBSCAN:
         sq_norms = np.sum(X ** 2, axis=1)
         distances = sq_norms[:, np.newaxis] + sq_norms[np.newaxis, :] - 2 * X @ X.T
         # 处理数值误差
+        # 数值误差可能让平方距离出现极小的负值，开方前先截断到 0
         distances = np.maximum(distances, 0)
         return np.sqrt(distances)
 
@@ -137,6 +143,7 @@ def demo():
     X = generate_cluster_data()
 
     # 训练 DBSCAN
+    # eps 太小会把一个簇切碎，太大又会把相邻簇连成一片；min_samples 越大噪声判定越严格
     dbscan = DBSCAN(eps=0.3, min_samples=5)
     labels = dbscan.fit(X)
 

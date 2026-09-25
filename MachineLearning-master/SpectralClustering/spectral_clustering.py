@@ -22,8 +22,12 @@ def main():
     """谱聚类演示。"""
     X, y = load_iris(return_X_y=True)
     # affinity="nearest_neighbors" 用 kNN 图构建相似度
+    # 内部步骤：kNN 图 -> 拉普拉斯矩阵 L = D - W -> 取最小 n_clusters 个特征值
+    # 对应的特征向量作为新特征，再在新特征上跑 KMeans
+    # n_neighbors：kNN 图的邻居数，太大时图连通性过强、非凸簇结构被抹平
     model = SpectralClustering(n_clusters=3, affinity="nearest_neighbors", n_neighbors=10, random_state=42)
     labels = model.fit_predict(X)
+    # ARI：调整兰德指数，衡量聚类结果与真实类别的一致性
     print("ARI:", adjusted_rand_score(y, labels))
 
 

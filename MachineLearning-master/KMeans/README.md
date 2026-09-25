@@ -11,3 +11,7 @@
 ```bash
 python test.py
 ```
+
+## 结果图
+
+![KMeans Iris](kmeans_iris.png)

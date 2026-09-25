@@ -34,6 +34,8 @@ class SimpleTreeStump:
 
     def fit(self, X, y):
         """寻找最优分裂特征和阈值，按叶节点均值预测。"""
+        # 这里 y 传入的是伪残差（负梯度值），而非真实标签
+        # 因此树桩按回归方式训练：叶节点输出残差均值
         best = (None, None, np.inf)
         for j in range(X.shape[1]):
             for t in np.unique(X[:, j]):
@@ -53,6 +55,7 @@ class SimpleTreeStump:
 
     def predict(self, X):
         """根据阈值分裂预测。"""
+        # x_j <= t 返回左叶均值，否则返回右叶均值
         return np.where(X[:, self.j] <= self.t, self.left, self.right)
 
 
@@ -71,24 +74,32 @@ class GradientBoostingClassifier:
     def fit(self, X, y):
         """逐轮拟合负梯度。"""
         # 标签转为 {-1, 1}
+        # 用 ±1 标签 + logistic loss 可避免 softmax 的参数冗余，且与负梯度推导一致
         y = np.where(y == 1, 1.0, -1.0)
+        # 初始化 F_0(x) = 0（logistic loss 下最优常数解为 0）
         F = np.zeros(len(y))  # 当前模型的决策函数值
         for _ in range(self.n_estimators):
             # logistic loss 的负梯度：y / (1 + exp(y*F))
+            # 即当前模型对样本 i 的"加权错误率"：F 越错，伪残差越大（上界为 1）
             residual = y / (1 + np.exp(y * F))  # # logistic loss 的负梯度（伪残差）
             # 用树桩拟合残差
+            # h_m 拟合的是伪残差而非真实标签（区别于 AdaBoost 直接拟合标签）
             tree = SimpleTreeStump().fit(X, residual)
             # 更新模型：F += lr * tree
+            # F_m(x) = F_{m-1}(x) + lr * h_m(x)，lr 是收缩系数（shrinkage），
+            # 防止单棵树主导并抑制过拟合，lr 越小通常需要越多的树
             F += self.lr * tree.predict(X)  # # 用学习率收缩后更新模型
             self.trees.append(tree)
         return self
 
     def decision_function(self, X):
         """累加所有树的加权预测得到决策函数值。"""
+        # F(x) = Σ_m lr * h_m(x)，即所有树桩贡献的加权和
         return sum(self.lr * t.predict(X) for t in self.trees)  # # 累加所有树的加权预测
 
     def predict(self, X):
         """决策函数值 > 0 预测为 1，否则为 0。"""
+        # 对应概率 P(y=1|x) = 1/(1+exp(-F(x)))，取 0.5 阈值等价于判断 F(x) 的正负
         return (self.decision_function(X) > 0).astype(int)  # # 决策函数值 > 0 预测为 1
 
 

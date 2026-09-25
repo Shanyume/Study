@@ -14,3 +14,7 @@ python testSVM.py
 ## Reference
 
 - cvxopt QP: http://cvxopt.org/userguide/coneprog.html
+
+## 结果图
+
+![SVM QP Boundary](svm_qp_boundary.png)

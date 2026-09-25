@@ -8,3 +8,7 @@
 ## 说明
 
 最简 RNN 时序二分类，取最后时刻隐状态做分类。
+
+## 结果图
+
+![RNN/LSTM/GRU Comparison](rnn_lstm_gru_comparison.png)

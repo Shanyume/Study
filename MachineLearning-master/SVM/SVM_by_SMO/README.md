@@ -11,3 +11,7 @@
 ```bash
 python testSVM-SMO.py
 ```
+
+## 结果图
+
+![SVM SMO Boundary](svm_smo_boundary.png)

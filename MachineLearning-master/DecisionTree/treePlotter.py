@@ -18,6 +18,8 @@ arrow_args = dict(arrowstyle="<-")
 
 
 # ------------------- 辅助函数：统计树的叶子节点数和深度 -------------------
+# 叶子数与深度是布局的两个关键量：水平坐标按"叶子数等宽"划分，
+# 垂直坐标按"深度等距"划分（坐标均为归一化到 [0,1] 的 axes fraction）
 def getNumLeafs(myTree):
     """
     递归计算决策树的叶子节点总数。
@@ -35,6 +37,7 @@ def getNumLeafs(myTree):
         if type(secondDict[key]).__name__ == 'dict':
             numLeafs += getNumLeafs(secondDict[key])
         else:   # 否则是叶子节点（类别标签）
+            # 每个叶子贡献 1 个水平单位
             numLeafs += 1
     return numLeafs
 
@@ -54,6 +57,7 @@ def getTreeDepth(myTree):
             thisDepth = 1 + getTreeDepth(secondDict[key])
         else:   # 叶子节点：深度记为1（当前边）
             thisDepth = 1
+        # 取各分支中的最大深度
         if thisDepth > maxDepth:
             maxDepth = thisDepth
     return maxDepth
@@ -69,6 +73,8 @@ def plotNode(nodeTxt, centerPt, parentPt, nodeType):
         parentPt : 箭头起点坐标（父节点位置）
         nodeType : 文本框样式（decisionNode 或 leafNode）
     利用全局的 createPlot.ax1 作为绘图区，使用 annotate 添加带箭头的注释。
+    注意 annotate 的语义：xy 是箭头终点、xytext 是文本框位置，
+    即从子节点（文本框）向父节点（箭头终点）画一条带箭头的连线。
     """
     createPlot.ax1.annotate(nodeTxt,
                             xy=parentPt,               # 箭头终点（指向父节点）
@@ -87,6 +93,7 @@ def plotMidText(cntrPt, parentPt, txtString):
         cntrPt    : 子节点坐标（当前节点）
         parentPt  : 父节点坐标
         txtString : 要显示的文本（如 '0' 或 '1'）
+    中点坐标 = (父坐标 + 子坐标) / 2，此处等价写法：父向子的位移量的一半加到子上
     """
     xMid = (parentPt[0] - cntrPt[0]) / 2.0 + cntrPt[0]
     yMid = (parentPt[1] - cntrPt[1]) / 2.0 + cntrPt[1]
@@ -163,6 +170,7 @@ def createPlot(inTree):
     # 初始垂直偏移：从顶部开始（1.0）
     plotTree.yOff = 1.0
     # 开始递归绘制，根节点的父节点位置设为 (0.5, 1.0)（即画布顶部中央）
+    # 根节点的父坐标虚拟地放在顶部中央，nodeTxt 为空字符串（根节点没有来自父节点的分支标签）
     plotTree(inTree, (0.5, 1.0), '')
     # 显示图形
     plt.show()
