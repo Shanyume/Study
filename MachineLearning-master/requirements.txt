@@ -5,6 +5,7 @@ matplotlib
 scipy
 scikit-learn
 cvxopt
+pytest
 
 # Optional: for legacy Theano-based Deep Learning Tutorials (Python 2 only)
 # theano

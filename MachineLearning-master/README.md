@@ -112,6 +112,24 @@ python examples/run_all.py
 
 当前验证包含核心模块的快速冒烟测试，用于确认 Python 3 / NumPy 2 / scikit-learn 1.9 环境下可以运行。
 
+## 测试
+
+### 单元测试
+
+```bash
+# 运行所有单元测试（30 个测试）
+pytest tests/ -v
+
+# 本地如有 ROS 插件冲突，禁用插件自动加载
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest tests/ -v
+```
+
+测试覆盖：PCA、KMeans、Decision Tree、Naive Bayes、SVM SMO、SVM QP、Gradient Boosting、Bagging、CART。
+
+### GitHub Actions CI
+
+每次 push 或 PR 会自动运行冒烟测试和单元测试，见 `.github/workflows/tests.yml`。
+
 ## 学习指南
 
 - [tutorial/LEARNING_PATH.md](tutorial/LEARNING_PATH.md)：按阶段从基础到进阶的学习路线
