@@ -35,7 +35,7 @@ class DBSCAN:
         # 找出每个点的 eps-邻域
         neighborhoods = []
         for i in range(n_samples):
-            neighbors = np.where(distances[i] <= self.eps)[0]
+            neighbors = np.where(distances[i] <= self.eps)[0]  # # 找出 eps 邻域内所有点的索引
             neighborhoods.append(neighbors)
 
         cluster_id = 0
@@ -150,7 +150,7 @@ def demo():
     unique_labels = set(labels)
     colors = plt.cm.Set1(np.linspace(0, 1, len(unique_labels)))
 
-    for label, color in zip(unique_labels, colors):
+    for label, color in zip(unique_labels, colors):  # # 遍历每个簇并分配颜色
         mask = labels == label
         if label == -1:
             # 噪声点用黑色 x 标记

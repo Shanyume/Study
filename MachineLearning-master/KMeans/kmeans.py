@@ -83,18 +83,18 @@ class KMeans(object):
                 minDist = np.inf; minIndex = -1
                 for j in range(self.n_clusters):
                     distJI = self._distEclud(self.centroids[j,:],X[i,:])
-                    if distJI < minDist:
+                    if distJI < minDist:  # # 找更近的质心
                         minDist = distJI; minIndex = j
-                if self.clusterAssment[i,0] != minIndex:
+                if self.clusterAssment[i,0] != minIndex:  # # 如果分配结果变化，标记 clusterChanged
                     clusterChanged = True
-                    self.clusterAssment[i,:] = minIndex,minDist**2
+                    self.clusterAssment[i,:] = minIndex,minDist**2  # # 更新样本所属簇索引和到质心的平方距离
                     
             if not clusterChanged:#若所有样本点所属的族都不改变,则已收敛，结束迭代
                 break   
             # 更新步骤：每个簇的均值作为新质心
             for i in range(self.n_clusters):
-                ptsInClust = X[np.nonzero(self.clusterAssment[:,0]==i)[0]]#取出属于第i个族的所有点
-                self.centroids[i,:] = np.mean(ptsInClust, axis=0)
+                ptsInClust = X[np.nonzero(self.clusterAssment[:,0]==i)[0]]  # # 取出属于第 i 个簇的所有样本#取出属于第i个族的所有点
+                self.centroids[i,:] = np.mean(ptsInClust, axis=0)  # # 用簇内样本均值更新质心
         
         self.labels = self.clusterAssment[:,0]
         self.sse = sum(self.clusterAssment[:,1])
@@ -114,7 +114,7 @@ class KMeans(object):
             minDist = np.inf
             for j in range(self.n_clusters):
                 distJI = self._distEclud(self.centroids[j,:],X[i,:])
-                if distJI < minDist:
+                if distJI < minDist:  # # 找更近的质心
                     minDist = distJI
                     preds[i] = j
         return preds
@@ -180,7 +180,7 @@ class biKMeans(object):
             minDist = np.inf
             for j in range(self.n_clusters):
                 distJI = self._distEclud(self.centroids[j,:],X[i,:])
-                if distJI < minDist:
+                if distJI < minDist:  # # 找更近的质心
                     minDist = distJI
                     preds[i] = j
         return preds

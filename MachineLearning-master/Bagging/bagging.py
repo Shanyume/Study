@@ -49,7 +49,7 @@ class BaggingClassifier:
         # 每行是一个基学习器对 X 的预测
         preds = np.array([m.predict(X) for m in self.models])
         # 对每个样本在基学习器之间投票
-        return np.array([np.bincount(p.astype(int)).argmax() for p in preds.T])
+        return np.array([np.bincount(p.astype(int)).argmax() for p in preds.T])  # # 对每个样本在基学习器之间投票取多数
 
 
 if __name__ == "__main__":

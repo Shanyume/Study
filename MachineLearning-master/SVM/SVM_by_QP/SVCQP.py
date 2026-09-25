@@ -50,14 +50,14 @@ class SVM(object):
             for j in range(n_samples):
                 K[i,j] = self.kernel(X[i], X[j])
 
-        P = cvxopt.matrix(np.outer(y,y) * K)
-        q = cvxopt.matrix(np.ones(n_samples) * -1)
-        A = cvxopt.matrix(y.astype(float), (1,n_samples))
+        P = cvxopt.matrix(np.outer(y,y) * K)  # # QP 目标函数 P 矩阵：(y*y)^T * K
+        q = cvxopt.matrix(np.ones(n_samples) * -1)  # # QP 目标函数 q 向量：全 -1
+        A = cvxopt.matrix(y.astype(float), (1,n_samples))  # # 等式约束：y^T * alpha = 0
         b = cvxopt.matrix(0.0)
 
         if self.C is None:
-            G = cvxopt.matrix(np.diag(np.ones(n_samples) * -1))
-            h = cvxopt.matrix(np.zeros(n_samples))
+            G = cvxopt.matrix(np.diag(np.ones(n_samples) * -1))  # # 硬间隔约束：alpha >= 0
+            h = cvxopt.matrix(np.zeros(n_samples))  # # 约束右侧：全 0
         else:
             tmp1 = np.diag(np.ones(n_samples) * -1)
             tmp2 = np.identity(n_samples)
@@ -67,13 +67,13 @@ class SVM(object):
             h = cvxopt.matrix(np.hstack((tmp1, tmp2)))
 
         # solve QP problem, DOC: http://cvxopt.org/userguide/coneprog.html?highlight=qp#cvxopt.solvers.qp
-        solution = cvxopt.solvers.qp(P, q, G, h, A, b)
+        solution = cvxopt.solvers.qp(P, q, G, h, A, b)  # # 求解 QP 问题
 
         # Lagrange multipliers
         a = np.ravel(solution['x'])
 
         # Support vectors have non zero lagrange multipliers
-        sv = a > 1e-5
+        sv = a > 1e-5  # # 支持向量：alpha > 0 的样本
         ind = np.arange(len(a))[sv]
         self.a = a[sv]
         self.sv = X[sv]
@@ -91,7 +91,7 @@ class SVM(object):
         if self.kernel == linear_kernel:
             self.w = np.zeros(n_features)
             for n in range(len(self.a)):
-                self.w += self.a[n] * self.sv_y[n] * self.sv[n]
+                self.w += self.a[n] * self.sv_y[n] * self.sv[n]  # # w = Σ alpha_i * y_i * x_i
         else:
             self.w = None
 
@@ -102,7 +102,7 @@ class SVM(object):
             y_predict = np.zeros(len(X))
             for i in range(len(X)):
                 s = 0
-                for a, sv_y, sv in zip(self.a, self.sv_y, self.sv):
+                for a, sv_y, sv in zip(self.a, self.sv_y, self.sv):  # # 累加所有支持向量的加权核输出
                     s += a * sv_y * self.kernel(X[i], sv)
                 y_predict[i] = s
             return y_predict + self.b

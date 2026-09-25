@@ -81,7 +81,7 @@ class KernelRidge():
         """
         K = self.compute_kernel_matrix(X, X)
 
-        self.alphas = np.dot(inv(K + self.C * np.eye(np.shape(K)[0])),
+        self.alphas = np.dot(inv(K + self.C * np.eye(np.shape(K)[0])),  # # 闭式解：alpha = (K + C*I)^(-1) * y
                         y)
 
         return self.alphas
@@ -98,6 +98,6 @@ class KernelRidge():
 
         k = self.compute_kernel_matrix(x_test, x_train)
 
-        y_test = np.dot(k, self.alphas)
+        y_test = np.dot(k, self.alphas)  # # 预测：K(x_test, x_train) @ alpha
         return y_test
 

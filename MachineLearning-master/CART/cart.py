@@ -42,9 +42,9 @@ class CARTClassifier:
         """递归构建决策树，返回表示节点的字典（叶子节点或内部节点）。"""
         # 达到最大深度或节点内类别已唯一时，作为叶子，取多数类作为预测标签
         if depth >= self.max_depth or len(np.unique(y)) == 1:
-            return {"leaf": True, "label": np.bincount(y).argmax()}
+            return {"leaf": True, "label": np.bincount(y).argmax()}  # # 叶节点：取样本数最多的类别
         j, t, g = self._best_split(X, y)              # 寻找当前节点的最优划分
-        if j is None: return {"leaf": True, "label": np.bincount(y).argmax()}  # 无可行划分则退化为叶子
+        if j is None: return {"leaf": True, "label": np.bincount(y).argmax()}  # # 叶节点：取样本数最多的类别  # 无可行划分则退化为叶子
         # 递归构建左右子树（依据 x_j <= t 划分样本）
         left = self._build(X[X[:, j] <= t], y[X[:, j] <= t], depth+1)
         right = self._build(X[X[:, j] > t], y[X[:, j] > t], depth+1)

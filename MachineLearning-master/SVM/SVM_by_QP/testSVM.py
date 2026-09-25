@@ -102,7 +102,7 @@ def plot_contour(X1_train, X2_train, clf):
     pl.scatter(clf.sv[:,0], clf.sv[:,1], s=100, c="g")
 
     X1, X2 = np.meshgrid(np.linspace(-6,6,50), np.linspace(-6,6,50))
-    X = np.array([[x1, x2] for x1, x2 in zip(np.ravel(X1), np.ravel(X2))])
+    X = np.array([[x1, x2] for x1, x2 in zip(np.ravel(X1), np.ravel(X2))])  # # 把网格展平成二维样本矩阵，用于预测决策边界
     Z = clf.project(X).reshape(X1.shape)
     pl.contour(X1, X2, Z, [0.0], colors='k', linewidths=1, origin='lower')
     pl.contour(X1, X2, Z + 1, [0.0], colors='grey', linewidths=1, origin='lower')

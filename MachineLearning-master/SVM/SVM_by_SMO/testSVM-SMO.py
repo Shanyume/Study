@@ -25,9 +25,9 @@ def readData(filename, header=True):
     return (np.array(data), np.array(header))
 
 def calc_acc(y, y_hat):
-    idx = np.where(y_hat == 1)
+    idx = np.where(y_hat == 1)  # # 找到预测为 1 的样本索引
     TP = np.sum(y_hat[idx] == y[idx])
-    idx = np.where(y_hat == -1)
+    idx = np.where(y_hat == -1)  # # 找到预测为 -1 的样本索引
     TN = np.sum(y_hat[idx] == y[idx])
     return float(TP + TN)/len(y)
 

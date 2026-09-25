@@ -84,7 +84,7 @@ def main():
     # 测试
     model.eval()
     with torch.no_grad():
-        pred = model(torch.from_numpy(Xte)).argmax(dim=1).numpy()
+        pred = model(torch.from_numpy(Xte)).argmax(dim=1).numpy()  # # 取概率最大的类别索引
     print("LSTM test acc:", accuracy_score(yte, pred))
 
 

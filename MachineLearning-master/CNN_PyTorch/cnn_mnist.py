@@ -79,7 +79,7 @@ def main():
     preds, trues = [], []
     with torch.no_grad():
         for X, y in test_loader:
-            pred = model(X.to(device)).argmax(dim=1).cpu().numpy()
+            pred = model(X.to(device)).argmax(dim=1).cpu().numpy()  # # 取概率最大的类别索引
             preds.extend(pred)
             trues.extend(y.numpy())
     print("CNN MNIST test acc:", accuracy_score(trues, preds))

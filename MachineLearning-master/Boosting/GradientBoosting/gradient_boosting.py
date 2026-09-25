@@ -65,21 +65,21 @@ class GradientBoostingClassifier:
         F = np.zeros(len(y))  # 当前模型的决策函数值
         for _ in range(self.n_estimators):
             # logistic loss 的负梯度：y / (1 + exp(y*F))
-            residual = y / (1 + np.exp(y * F))
+            residual = y / (1 + np.exp(y * F))  # # logistic loss 的负梯度（伪残差）
             # 用树桩拟合残差
             tree = SimpleTreeStump().fit(X, residual)
             # 更新模型：F += lr * tree
-            F += self.lr * tree.predict(X)
+            F += self.lr * tree.predict(X)  # # 用学习率收缩后更新模型
             self.trees.append(tree)
         return self
 
     def decision_function(self, X):
         """累加所有树的加权预测得到决策函数值。"""
-        return sum(self.lr * t.predict(X) for t in self.trees)
+        return sum(self.lr * t.predict(X) for t in self.trees)  # # 累加所有树的加权预测
 
     def predict(self, X):
         """决策函数值 > 0 预测为 1，否则为 0。"""
-        return (self.decision_function(X) > 0).astype(int)
+        return (self.decision_function(X) > 0).astype(int)  # # 决策函数值 > 0 预测为 1
 
 
 if __name__ == "__main__":

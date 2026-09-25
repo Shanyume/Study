@@ -52,13 +52,13 @@ class SVCSMO():
             count += 1
             alpha_prev = np.copy(alpha)
             for j in range(0, n):
-                i = self.get_rnd_int(0, n-1, j) # Get random int i~=j
+                i = self.get_rnd_int(0, n-1, j)  # # 随机选一个 i != j 的样本 # Get random int i~=j
                 x_i, x_j, y_i, y_j = X[i,:], X[j,:], y[i], y[j]
-                k_ij = kernel(x_i, x_i) + kernel(x_j, x_j) - 2 * kernel(x_i, x_j)
+                k_ij = kernel(x_i, x_i) + kernel(x_j, x_j) - 2 * kernel(x_i, x_j)  # # 计算 K(x_i,x_i) + K(x_j,x_j) - 2K(x_i,x_j)
                 if k_ij == 0:
                     continue
                 alpha_prime_j, alpha_prime_i = alpha[j], alpha[i]
-                (L, H) = self.compute_L_H(self.C, alpha_prime_j, alpha_prime_i, y_j, y_i)
+                (L, H) = self.compute_L_H(self.C, alpha_prime_j, alpha_prime_i, y_j, y_i)  # # 计算alpha[j]的可行域下界L和上界H
 
                 # Compute model parameters
                 self.w = self.calc_w(alpha, y, X)
@@ -69,11 +69,11 @@ class SVCSMO():
                 E_j = self.E(x_j, y_j, self.w, self.b)
 
                 # Set new alpha values
-                alpha[j] = alpha_prime_j + float(y_j * (E_i - E_j))/k_ij
-                alpha[j] = max(alpha[j], L)
-                alpha[j] = min(alpha[j], H)
+                alpha[j] = alpha_prime_j + float(y_j * (E_i - E_j))/k_ij  # # SMO 更新公式
+                alpha[j] = max(alpha[j], L)  # # 裁剪到可行域下界
+                alpha[j] = min(alpha[j], H)  # # 裁剪到可行域上界
 
-                alpha[i] = alpha_prime_i + y_i*y_j * (alpha_prime_j - alpha[j])
+                alpha[i] = alpha_prime_i + y_i*y_j * (alpha_prime_j - alpha[j])  # # 保持等式约束 y_i*alpha_i + y_j*alpha_j 不变
 
             # Check convergence
             diff = np.linalg.norm(alpha - alpha_prev)
@@ -88,7 +88,7 @@ class SVCSMO():
         if self.kernel_type == 'linear':
             self.w = self.calc_w(alpha, y, X)
         # Get support vectors
-        alpha_idx = np.where(alpha > 0)[0]
+        alpha_idx = np.where(alpha > 0)[0]  # # 支持向量：alpha > 0 的样本索引
         support_vectors = X[alpha_idx, :]
         return support_vectors, count
     def predict(self, X):

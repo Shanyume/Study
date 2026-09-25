@@ -441,10 +441,10 @@ def main():
     )
 
     # 6. 最优模型混淆矩阵
-    best_model_name = results_df.iloc[0]['Model']  # 结果表第一行就是交叉验证最优模型
+    best_model_name = results_df.iloc[0]['Model']  # # 结果表第一行就是 CV 最优模型  # 结果表第一行就是交叉验证最优模型
     best_model = models[best_model_name]       # 根据名称取出已训练好的最优模型
     y_pred_best = best_model.predict(X_test)   # 用最优模型预测测试集
-    cm = confusion_matrix(y_test, y_pred_best) # 生成真实类别和预测类别的交叉表
+    cm = confusion_matrix(y_test, y_pred_best)  # # 生成真实类别和预测类别的混淆矩阵 # 生成真实类别和预测类别的交叉表
 
     print("\n" + "=" * 60)                     # 打印步骤分隔线
     print(f"6. 最优模型 [{best_model_name}] 混淆矩阵")  # 标明当前最优模型
@@ -462,7 +462,7 @@ def main():
     print("=" * 60)
     scaler = StandardScaler()                  # 为二维边界图单独创建标准化器
     X_train_scaled = scaler.fit_transform(X_train)  # 只在训练集上学习均值和标准差
-    X_2d = X_train_scaled[:, :2]               # 只取前两个特征，因为二维平面只能展示两个维度
+    X_2d = X_train_scaled[:, :2]  # # 只取前两个特征用于二维可视化               # 只取前两个特征，因为二维平面只能展示两个维度
     boundary_model = KNeighborsClassifier(n_neighbors=5)  # 单独训练一个用于演示的 KNN
     boundary_model.fit(X_2d, y_train)          # 只用前两个特征训练，这是一个独立的二维演示模型
     plot_decision_boundary(

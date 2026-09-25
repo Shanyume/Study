@@ -83,7 +83,7 @@ class DecisionTree:
                                  for c in np.unique(y)])
 
         n = len(y)
-        gini = (np.sum(left_mask) / n) * gini_left + (np.sum(right_mask) / n) * gini_right
+        gini = (np.sum(left_mask) / n) * gini_left + (np.sum(right_mask) / n) * gini_right  # # 加权基尼系数
         return gini
 
     def predict(self, X):

@@ -170,7 +170,7 @@ class MultinomialNB(object):
             # 为数值稳定性，使用对数，但这里保持原乘法（简单演示）
             # 若特征值缺失，概率为0，则后验为0，可跳过
             cond_prob = 1.0
-            for feat_idx, feat_val in enumerate(x):
+            for feat_idx, feat_val in enumerate(x):  # # 遍历每个特征
                 feat_prob_dict = self.conditional_prob_[c][feat_idx]
                 prob = self._get_xj_prob(feat_prob_dict, feat_val)
                 cond_prob *= prob

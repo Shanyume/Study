@@ -20,9 +20,9 @@ def run(name, script):
     """运行单个脚本并打印状态。"""
 
     import subprocess
-    env = {"PYTHONPATH": str(ROOT), "MPLBACKEND": "Agg", "PATH": "/usr/bin:/bin:/usr/local/bin"}
-    r = subprocess.run([sys.executable, str(ROOT / script)], capture_output=True, text=True, env=env, timeout=180)
-    status = "OK" if r.returncode == 0 else "FAIL"
+    env = {"PYTHONPATH": str(ROOT), "MPLBACKEND": "Agg", "PATH": "/usr/bin:/bin:/usr/local/bin"}  # # 设置环境变量：无界面后端 + 项目路径
+    r = subprocess.run([sys.executable, str(ROOT / script)], capture_output=True, text=True, env=env, timeout=180)  # # 运行脚本，捕获输出，超时 180 秒
+    status = "OK" if r.returncode == 0 else "FAIL"  # # 根据返回码判断成功或失败
     tail = (r.stdout + r.stderr).strip().splitlines()
     print(f"{name}: {status}")
     if r.returncode != 0 and tail:

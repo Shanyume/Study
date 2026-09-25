@@ -33,9 +33,9 @@ class SoftmaxRegression:
 
     def _softmax(self, z):
         """数值稳定的 softmax：减去每行最大值防止 exp 溢出。"""
-        z = z - z.max(axis=1, keepdims=True)
+        z = z - z.max(axis=1, keepdims=True)  # # 减去每行最大值，防止 exp 溢出
         e = np.exp(z)
-        return e / e.sum(axis=1, keepdims=True)
+        return e / e.sum(axis=1, keepdims=True)  # # softmax：指数归一化为概率分布
 
     def fit(self, X, y):
         """全批量梯度下降训练 softmax 回归。"""
@@ -51,11 +51,11 @@ class SoftmaxRegression:
             # 前向：计算概率 P(y=k|x)
             P = self._softmax(X @ self.W + self.b)
             # 梯度：交叉熵对 W 和 b 的偏导 + L2 正则
-            grad_w = X.T @ (P - Y) / n + self.l2 * self.W
-            grad_b = (P - Y).mean(axis=0)
+            grad_w = X.T @ (P - Y) / n + self.l2 * self.W  # # 交叉熵梯度 + L2 正则
+            grad_b = (P - Y).mean(axis=0)  # # 偏置梯度
             # 更新参数
-            self.W -= self.lr * grad_w
-            self.b -= self.lr * grad_b
+            self.W -= self.lr * grad_w  # # 沿负梯度方向更新权重
+            self.b -= self.lr * grad_b  # # 更新偏置
         return self
 
     def predict_proba(self, X):
@@ -64,7 +64,7 @@ class SoftmaxRegression:
 
     def predict(self, X):
         """返回概率最大的类别。"""
-        return self.predict_proba(X).argmax(axis=1)
+        return self.predict_proba(X).argmax(axis=1)  # # 返回概率最大的类别
 
 
 if __name__ == "__main__":

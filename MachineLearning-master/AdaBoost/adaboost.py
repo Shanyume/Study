@@ -126,7 +126,7 @@ def demo():
     X, y = make_classification(n_samples=1000, n_features=20, n_classes=2,
                                n_informative=10, random_state=42)
     # 将标签转换为 -1 和 1
-    y = np.where(y == 0, -1, 1)
+    y = np.where(y == 0, -1, 1)  # # 标签转为 {-1, 1}
 
     # 划分训练集和测试集
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)

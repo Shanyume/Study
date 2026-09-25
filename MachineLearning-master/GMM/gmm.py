@@ -42,8 +42,8 @@ class GMM:
         n, d = X.shape
 
         # 初始化：随机选 k 个点作为均值，协方差为单位阵
-        self.mu = X[rng.choice(n, self.k, replace=False)]
-        self.cov = np.array([np.eye(d) for _ in range(self.k)])
+        self.mu = X[rng.choice(n, self.k, replace=False)]  # # 随机选 k 个样本作为初始均值
+        self.cov = np.array([np.eye(d) for _ in range(self.k)])  # # 协方差矩阵初始化为单位阵
         self.pi = np.ones(self.k) / self.k  # 混合系数均匀初始化
 
         prev_ll = -np.inf
@@ -54,22 +54,22 @@ class GMM:
                 # 第 i 个高斯分量下每个样本的概率 × 混合系数
                 resp[:, i] = self.pi[i] * multivariate_normal.pdf(X, self.mu[i], self.cov[i])
             # 归一化为后验概率（每行和为 1）
-            resp /= resp.sum(axis=1, keepdims=True) + 1e-12
+            resp /= resp.sum(axis=1, keepdims=True) + 1e-12  # # 归一化为后验概率，每行和为 1
 
             # ---- M-step：更新参数 ----
             Nk = resp.sum(axis=0)  # 每个分量的有效样本数
             self.pi = Nk / n  # 更新混合系数
-            self.mu = (resp.T @ X) / Nk[:, None]  # 更新均值
+            self.mu = (resp.T @ X) / Nk[:, None]  # # 加权均值更新  # 更新均值
             for i in range(self.k):
                 diff = X - self.mu[i]
                 # 加权协方差 + 正则化项防止奇异
-                self.cov[i] = (resp[:, i][:, None] * diff).T @ diff / Nk[i] + 1e-6*np.eye(d)
+                self.cov[i] = (resp[:, i][:, None] * diff).T @ diff / Nk[i] + 1e-6*np.eye(d)  # # 加权协方差 + 正则化防止奇异
 
             # 计算对数似然，判断收敛
-            densities = np.array([
+            densities = np.array([  # # 计算所有分量下的概率密度
                 self.pi[i] * multivariate_normal.pdf(X, self.mu[i], self.cov[i])
                 for i in range(self.k)])
-            ll = np.sum(np.log(densities.sum(axis=0) + 1e-12))
+            ll = np.sum(np.log(densities.sum(axis=0) + 1e-12))  # # 对数似然，用于判断收敛
             if abs(ll - prev_ll) < self.tol:
                 break
             prev_ll = ll
@@ -83,7 +83,7 @@ class GMM:
         probs = np.array([
             self.pi[i] * multivariate_normal.pdf(X, self.mu[i], self.cov[i])
             for i in range(self.k)])
-        return probs.argmax(axis=0)
+        return probs.argmax(axis=0)  # # 返回每个样本概率最大的分量索引
 
 
 def best_label_mapping(y_true, y_pred, k):

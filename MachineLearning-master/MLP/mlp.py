@@ -180,7 +180,7 @@ class MLP:
         :return: 预测类别标签
         """
         activations, _ = self.forward(X)
-        return np.argmax(activations[-1], axis=1)
+        return np.argmax(activations[-1], axis=1)  # # 取输出层激活最大的神经元索引作为预测类别
 
     def score(self, X, y):
         """

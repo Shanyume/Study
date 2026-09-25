@@ -88,9 +88,9 @@ class DecisionTree:
             for value in uniqueVals:
                 sub_X,sub_y = self._splitDataSet(X,y,i,value)
                 prob = len(sub_y)/float(len(y))
-                newEntropy += prob * self._calcEntropy(sub_y)  
+                newEntropy += prob * self._calcEntropy(sub_y)    # # 累加子集熵
             #计算信息增益，根据信息增益选择最佳分割特征
-            infoGain = oldEntropy - newEntropy
+            infoGain = oldEntropy - newEntropy  # # 信息增益 = 原熵 - 分割后熵
             if (infoGain > bestInfoGain):
                 bestInfoGain = infoGain
                 bestFeatureIndex = i
@@ -115,15 +115,15 @@ class DecisionTree:
             for value in uniqueVals:
                 sub_X,sub_y = self._splitDataSet(X,y,i,value)
                 prob = len(sub_y)/float(len(y))
-                newEntropy += prob * self._calcEntropy(sub_y)  
+                newEntropy += prob * self._calcEntropy(sub_y)    # # 累加子集熵
                 splitInformation -= prob * np.log2(prob)
             #计算信息增益比，根据信息增益比选择最佳分割特征
             #splitInformation若为0，说明该特征的所有值都是相同的，显然不能作为分割特征
             if splitInformation==0.0:
                 pass
             else:
-                infoGain = oldEntropy - newEntropy
-                gainRatio = infoGain/splitInformation
+                infoGain = oldEntropy - newEntropy  # # 信息增益 = 原熵 - 分割后熵
+                gainRatio = infoGain/splitInformation  # # 信息增益比 = 信息增益 / 分裂信息
                 if(gainRatio > bestGainRatio):
                     bestGainRatio = gainRatio
                     bestFeatureIndex = i
@@ -139,7 +139,7 @@ class DecisionTree:
         for vote in labelList:
             if vote not in list(labelCount.keys()): labelCount[vote] = 0
             labelCount[vote] += 1
-        sortedClassCount = sorted(iter(labelCount.items()),key=lambda x:x[1], reverse=True)
+        sortedClassCount = sorted(iter(labelCount.items()),key=lambda x:x[1], reverse=True)  # # 按出现次数降序排列，取最多的类别
         return sortedClassCount[0][0]
     
     
@@ -150,7 +150,7 @@ class DecisionTree:
         """
         labelList = list(y)
         #所有label都相同的话，则停止分割，返回该label
-        if labelList.count(labelList[0]) == len(labelList): 
+        if labelList.count(labelList[0]) == len(labelList):   # # 所有标签相同则成为叶子
             return labelList[0]
         #没有特征可分割时，停止分割，返回出现次数最多的label
         if len(featureIndex) == 0:
@@ -158,9 +158,9 @@ class DecisionTree:
         
         #可以继续分割的话，确定最佳分割特征
         if self._mode == 'C4.5':
-            bestFeatIndex = self._chooseBestFeatureToSplit_C45(X,y)
+            bestFeatIndex = self._chooseBestFeatureToSplit_C45(X,y)  # # C4.5：信息增益比
         elif self._mode == 'ID3':
-            bestFeatIndex = self._chooseBestFeatureToSplit_ID3(X,y)
+            bestFeatIndex = self._chooseBestFeatureToSplit_ID3(X,y)  # # ID3：信息增益
             
         bestFeatStr = featureIndex[bestFeatIndex]
         featureIndex = list(featureIndex)

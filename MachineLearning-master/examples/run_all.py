@@ -93,7 +93,7 @@ def check_svm_smo():
     model = SVCSMO(max_iter=100)
     model.fit(X, y)
     y_hat = model.predict(X)
-    acc = np.mean(y_hat == y)
+    acc = np.mean(y_hat == y)  # # 计算训练集准确率
     assert acc > 0.5, f"SVM SMO 准确率过低: {acc}"
     print(f"SVM SMO: OK (train accuracy={acc:.3f})")
 

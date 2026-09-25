@@ -85,7 +85,7 @@ def main():
     # 测试：关闭 dropout 等训练专用行为
     model.eval()
     with torch.no_grad():
-        pred = model(torch.from_numpy(Xte)).argmax(dim=1).numpy()
+        pred = model(torch.from_numpy(Xte)).argmax(dim=1).numpy()  # # 取概率最大的类别索引
     print("GRU test acc:", accuracy_score(yte, pred))
 
 
