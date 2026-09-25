@@ -1,6 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+AdaBoost（自适应提升）
+========================
+
+AdaBoost 是经典的 Boosting 算法：
+    1. 每轮迭代训练一个弱学习器（决策树桩）
+    2. 根据该学习器的错误率更新样本权重：
+       - 分错的样本权重增大，下轮更受关注
+       - 分对的样本权重减小
+    3. 根据错误率计算该学习器的权重 alpha
+    4. 最终模型是所有弱学习器的加权投票
+
+数据集：sklearn Iris（二分类）
+依赖：numpy、scikit-learn
+"""
+
+
 import numpy as np
 
 

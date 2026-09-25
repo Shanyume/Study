@@ -5,9 +5,19 @@ Softmax 回归（多分类逻辑回归）
 ================================
 
 Softmax 回归是逻辑回归在多分类上的推广：
-    - 对每个类别学习一组权重 w_k 和偏置 b_k
-    - 用 softmax 函数把线性得分转为概率分布
-    - 用交叉熵损失 + L2 正则优化
+
+模型：
+    P(y = k | x) = softmax(z)_k = exp(z_k) / Σ_j exp(z_j)
+    其中 z_k = w_k · x + b_k
+
+损失函数（交叉熵 + L2 正则）：
+    L = -(1/m) Σ_i Σ_k y_ik * log(P(y=k|x_i)) + λ/(2m) ||W||²
+
+梯度：
+    ∂L/∂W = (1/m) X^T (P - Y) + λ W
+    ∂L/∂b = (1/m) Σ_i (P_i - Y_i)
+
+其中 Y 是 one-hot 编码，P 是 softmax 输出概率。
 
 数据集：sklearn Iris（3 分类）
 依赖：numpy、scikit-learn

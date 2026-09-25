@@ -25,7 +25,7 @@ import csv
 
 
 def check_pca():
-    """PCA 冒烟测试"""
+    """PCA 冒烟测试：生成随机数据，验证降维和重构维度。"""
     from PCA.pca import pca
     X = np.random.RandomState(42).randn(100, 10)
     low, rec = pca(X, percent=0.95)
@@ -35,7 +35,7 @@ def check_pca():
 
 
 def check_decision_tree():
-    """决策树冒烟测试"""
+    """决策树冒烟测试：用手工小数据集验证 ID3 训练集预测。"""
     from DecisionTree.id3_c45 import DecisionTree
     X = [[1, 2, 0, 1, 0],
          [0, 1, 1, 0, 1],
@@ -51,7 +51,7 @@ def check_decision_tree():
 
 
 def check_kmeans():
-    """KMeans 冒烟测试"""
+    """KMeans 冒烟测试：加载 data.pkl，验证标签数量和 SSE。"""
     from KMeans.kmeans import KMeans
     with open(ROOT / 'KMeans' / 'data.pkl', 'rb') as f:
         X, y = pickle.load(f, encoding='latin1')
@@ -63,7 +63,7 @@ def check_kmeans():
 
 
 def check_naive_bayes():
-    """朴素贝叶斯冒烟测试"""
+    """朴素贝叶斯冒烟测试：验证多项式和高斯朴素贝叶斯的预测。"""
     from NaiveBayes.NaiveBayes import MultinomialNB, GaussianNB
     X = np.array([
         [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3],
@@ -81,7 +81,7 @@ def check_naive_bayes():
 
 
 def check_svm_smo():
-    """SVM SMO 冒烟测试"""
+    """SVM SMO 冒烟测试：读取 iris 数据，验证训练集准确率 > 0.5。"""
     sys.path.insert(0, str(ROOT / 'SVM' / 'SVM_by_SMO'))
     from SVCSMO import SVCSMO
     data = []
@@ -99,7 +99,7 @@ def check_svm_smo():
 
 
 def check_svm_qp():
-    """SVM QP 冒烟测试"""
+    """SVM QP 冒烟测试：用小样本验证线性核 QP SVM。"""
     sys.path.insert(0, str(ROOT / 'SVM' / 'SVM_by_QP'))
     from SVCQP import SVM, linear_kernel
     X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
@@ -112,7 +112,7 @@ def check_svm_qp():
 
 
 def check_kernel_ridge():
-    """Kernel Ridge 冒烟测试"""
+    """Kernel Ridge 冒烟测试：读取 iris 数据，验证预测数量。"""
     sys.path.insert(0, str(ROOT / 'Ridge' / 'kernel_ridge'))
     from kernel_ridge import KernelRidge
     data = []
@@ -129,7 +129,7 @@ def check_kernel_ridge():
 
 
 def check_iris_sklearn():
-    """Iris sklearn 冒烟测试：只验证几个核心 sklearn 分类器"""
+    """Iris sklearn 冒烟测试：验证 KNN / LR / SVM 测试集准确率 > 0.8。"""
     from sklearn.datasets import load_iris
     from sklearn.model_selection import train_test_split
     from sklearn.pipeline import make_pipeline
@@ -156,6 +156,7 @@ def check_iris_sklearn():
 
 
 def main():
+    """依次运行所有冒烟测试。"""
     print("=" * 50)
     print("MachineLearning 统一冒烟测试")
     print("=" * 50)

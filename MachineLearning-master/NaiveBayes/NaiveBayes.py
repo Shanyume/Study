@@ -1,12 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Created on 2015/09/06
-Modified on 2026-08-28
+Naive Bayes（朴素贝叶斯）
+==========================
 
-@author: wepon (http://2hwp.com)
-Modified by: Assistant
+朴素贝叶斯基于贝叶斯定理和特征条件独立假设：
 
-API Reference: http://scikit-learn.org/stable/modules/naive_bayes.html#naive-bayes
+    P(y = c_k | x) ∝ P(y = c_k) * Π_j P(x_j | y = c_k)
+
+预测时选择使后验概率最大的类别。
+
+提供两个类：
+    - MultinomialNB：多项式朴素贝叶斯，适用于离散特征（如文本词频）
+        支持 Laplace 平滑（alpha=1）和 Lidstone 平滑（0<alpha<1）
+    - GaussianNB：高斯朴素贝叶斯，适用于连续特征
+        假设每个特征在每个类别下服从高斯分布
+
+API 参考：http://scikit-learn.org/stable/modules/naive_bayes.html#naive-bayes
+
+依赖：numpy
 """
 import numpy as np
 

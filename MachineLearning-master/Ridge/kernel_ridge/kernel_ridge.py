@@ -3,10 +3,21 @@
 Kernel Ridge Regression（核岭回归）
 ======================================
 
-核岭回归把核方法和岭回归结合：
-    - 核函数把数据映射到高维空间
-    - 岭回归在核空间中求解带 L2 正则的线性回归
-    - 闭式解：alpha = (K + C*I)^(-1) * y
+核岭回归把核方法（Kernel）和岭回归（Ridge Regression）结合：
+
+核心公式：
+    alpha = (K + C * I)^(-1) * y
+    y_test = K(x_test, x_train) @ alpha
+
+其中：
+    K: 核矩阵（Gram matrix），K[i,j] = kernel(x_i, x_j)
+    C: 正则化参数，越大越平滑
+    I: 单位矩阵
+
+核函数：
+    - linear：K(x,y) = x · y^T
+    - quadratic：K(x,y) = (x · y^T)^2
+    - gaussian：K(x,y) = exp(-||x-y||² / (2σ²))
 
 Doc: https://www.ics.uci.edu/~welling/classnotes/papers_class/Kernel-Ridge.pdf
 
@@ -19,9 +30,16 @@ from scipy import linalg
 
 class KernelRidge():
     """
-        Simple implementation of a Kernel Ridge Regression using the
-        closed form for training.
-        Doc: https://www.ics.uci.edu/~welling/classnotes/papers_class/Kernel-Ridge.pdf
+    核岭回归分类器（简化实现），使用闭式解训练。
+
+    参数：
+        kernel_type: 核类型，'linear' / 'quadratic' / 'gaussian'
+        C: 正则化参数，越大越平滑
+        gamma: 高斯核的 σ 参数
+
+    属性：
+        alphas: 训练后得到的系数 (n_samples, 1)
+        kernel: 当前选用的核函数
     """
 
     def __init__(self, kernel_type='linear', C=1.0, gamma=5.0):
@@ -43,14 +61,17 @@ class KernelRidge():
         self.C = C
         self.gamma = gamma
 
-    # Define kernels
+    # 定义核函数
     def kernel_linear(self, x1, x2):
+        """线性核：K(x1, x2) = x1 · x2^T。"""
         return np.dot(x1, x2.T)
 
     def kernel_quadratic(self, x1, x2):
+        """二次核：K(x1, x2) = (x1 · x2^T)^2。"""
         return (np.dot(x1, x2.T) ** 2)
 
     def kernel_gaussian(self, x1, x2, gamma=5.0):
+        """高斯核：K(x1, x2) = exp(-||x1-x2||² / (2σ²))，σ = gamma。"""
         gamma = self.gamma
         return np.exp(-linalg.norm(x1 - x2) ** 2 / (2 * (gamma ** 2)))
 
@@ -74,10 +95,11 @@ class KernelRidge():
 
     def fit(self, X, y):
         """
-        training KRR
-        :param X: training X
-        :param y: training y
-        :return: alpha vector, see document TODO
+        训练 KRR：计算核矩阵并求闭式解 alpha = (K + C*I)^(-1) * y。
+
+        :param X: 训练特征矩阵 (n_samples, n_features)
+        :param y: 训练目标值 (n_samples, 1)
+        :return: alpha 系数
         """
         K = self.compute_kernel_matrix(X, X)
 
@@ -87,6 +109,13 @@ class KernelRidge():
         return self.alphas
 
     def predict(self, x_train, x_test):
+        """
+        预测：y_test = K(x_test, x_train) @ alpha。
+
+        :param x_train: 训练特征矩阵
+        :param x_test: 测试特征矩阵
+        :return: 预测值
+        """
         """
 
         :param x_train: DxNtr array of Ntr train data points

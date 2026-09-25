@@ -3,13 +3,28 @@
 KMeans 聚类算法
 ================
 
-KMeans 是最常用的聚类算法之一：
-    1. 随机初始化 k 个质心
-    2. 每个样本分配到最近的质心
-    3. 用每个簇的均值更新质心
-    4. 重复 2-3 直到收敛
+KMeans 是最常用的硬聚类算法，目标是最小化簇内平方误差（SSE）：
 
-本脚本实现 KMeans 与二分 KMeans（biKMeans）。
+    1. 初始化：随机选 k 个样本作为初始质心，或由用户指定
+    2. 分配（Assignment）：每个样本分配到最近的质心所属的簇
+    3. 更新（Update）：用每个簇内所有样本的均值更新质心
+    4. 重复 2-3 直到没有样本改变簇，或达到最大迭代次数
+
+还实现 biKMeans（二分 KMeans）：
+    - 从所有样本为一个簇开始
+    - 每次选 SSE 最大的簇拆分成两个
+    - 直到达到目标簇数
+
+参数：
+    n_clusters: 聚类个数 k
+    initCent: 质心初始化方式，"random" 或指定 array
+    max_iter: 最大迭代次数
+
+属性：
+    centroids: 最终质心矩阵 (k, n_features)
+    labels: 每个样本的簇索引 (n_samples,)
+    sse: 总平方误差
+    clusterAssment: (n_samples, 2) 矩阵，第一列是簇索引，第二列是该样本到所属质心的平方距离
 
 Reference:
     Book: <<Machine Learning in Action>>
@@ -46,12 +61,12 @@ class KMeans(object):
         self.labels = None   
         self.sse = None 
     
-    #计算两点的欧式距离
     def _distEclud(self, vecA, vecB):
+        """计算两点之间的欧氏距离。"""
         return np.linalg.norm(vecA - vecB)
         
-    #随机选取k个质心,必须在数据集的边界内
     def _randCent(self, X, k):
+        """随机选取 k 个质心，每个维度的取值范围在数据集该维度的最小值到最大值之间。"""
         n = X.shape[1]        #特征维数
         centroids = np.empty((k,n))  #k*n的矩阵，用于存储质心
         for j in range(n):           #产生k个质心，一维一维地随机初始化
@@ -129,8 +144,8 @@ class biKMeans(object):
         self.sse = None
         
     
-    #计算两点的欧式距离
     def _distEclud(self, vecA, vecB):
+        """计算两点之间的欧氏距离。"""
         return np.linalg.norm(vecA - vecB)
         
     def fit(self,X):

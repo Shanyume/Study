@@ -4,8 +4,12 @@
 SVM SMO 测试脚本
 ==================
 
-用 Iris 数据集测试 SMO SVM 实现。
+用 Iris 二分类数据测试 SMO SVM 实现：
+    - 读取 CSV 数据（无表头）
+    - 训练 SVCSMO 模型
+    - 输出支持向量数、偏置、权重、准确率、MSE、迭代次数
 
+数据集：SVM/SVM_by_SMO/small_data/iris-slwc.txt
 依赖：numpy
 """
 
@@ -15,6 +19,7 @@ from SVCSMO import SVCSMO
 filepath = os.path.dirname(os.path.abspath(__file__))
 
 def readData(filename, header=True):
+    """读取 CSV 文件，返回 (数据矩阵, 表头)。"""
     data, header = [], None
     with open(filename, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
@@ -25,6 +30,7 @@ def readData(filename, header=True):
     return (np.array(data), np.array(header))
 
 def calc_acc(y, y_hat):
+    """计算准确率：分别统计预测为 1 和 -1 时的正确数。"""
     idx = np.where(y_hat == 1)  # # 找到预测为 1 的样本索引
     TP = np.sum(y_hat[idx] == y[idx])
     idx = np.where(y_hat == -1)  # # 找到预测为 -1 的样本索引
@@ -32,26 +38,28 @@ def calc_acc(y, y_hat):
     return float(TP + TN)/len(y)
 
 def calc_mse(y, y_hat):
+    """计算均方误差。"""
     return np.nanmean(((y - y_hat) ** 2))
 
 def test_main(filename='data/iris-virginica.txt', C=1.0, kernel_type='linear', epsilon=0.001):
+    """SVM SMO 完整测试流程：加载数据 -> 训练 -> 预测 -> 输出指标。"""
     # Load data
     (data, _) = readData('%s/%s' % (filepath, filename), header=False)
     data = data.astype(float)
 
-    # Split data
+    # 划分特征和标签
     X, y = data[:,0:-1], data[:,-1].astype(int)
 
-    # Initialize model
+    # 初始化 SMO SVM 模型
     model = SVCSMO()
 
-    # Fit model
+    # 训练模型，返回支持向量数组和迭代次数
     support_vectors, iterations = model.fit(X, y)
 
-    # Support vector count
+    # 支持向量数量
     sv_count = support_vectors.shape[0]
 
-    # Make prediction
+    # 用训练好的模型预测
     y_hat = model.predict(X)
 
     # Calculate accuracy

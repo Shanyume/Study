@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+DBSCAN（密度聚类）
+====================
 
+DBSCAN 是基于密度的聚类算法：
+    1. 对每个点找 eps 半径内的邻居数
+    2. 邻居数 >= min_samples 的点为核心点
+    3. 从核心点扩展，把密度可达的点归为同一簇
+    4. 不属于任何簇的点标记为噪声（-1）
+
+优点：不需要指定簇数，能发现任意形状的簇，能识别噪声。
+缺点：对 eps 和 min_samples 敏感。
+
+数据集：sklearn make_moons + 噪声
+依赖：numpy、matplotlib、scikit-learn（仅数据）
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 

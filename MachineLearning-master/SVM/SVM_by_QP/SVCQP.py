@@ -3,10 +3,29 @@
 SVM by Quadratic Programming（二次规划 SVM）
 ==============================================
 
-用 cvxopt 求解 SVM 对偶问题的二次规划：
-    - 构建拉格朗日乘子 alpha 的 QP 问题
-    - 支持线性核、多项式核、高斯核
-    - 硬间隔（C=None）和软间隔（C 设定值）
+SVM 的核心是求解对偶问题的二次规划（QP）：
+
+    max  Σ alpha_i - (1/2) Σ Σ alpha_i alpha_j y_i y_j K(x_i, x_j)
+    s.t. Σ alpha_i y_i = 0
+         0 <= alpha_i <= C    （软间隔）
+         alpha_i >= 0          （硬间隔）
+
+cvxopt 用标准形式：
+    min  (1/2) alpha^T P alpha + q^T alpha
+    s.t. G alpha <= h
+         A alpha = b
+
+其中：
+    P = outer(y, y) * K     （核矩阵按标签加权）
+    q = -1（全 -1 向量）
+    A = y^T                 （等式约束 y^T alpha = 0）
+    b = 0
+    G/h：约束 alpha 的下界和上界
+
+支持核函数：
+    - linear_kernel：线性核
+    - polynomial_kernel：多项式核
+    - gaussian_kernel：高斯核（RBF）
 
 依赖：numpy、cvxopt
 """
@@ -15,14 +34,17 @@ from numpy import linalg
 import cvxopt
 import cvxopt.solvers
 
-## define kenrel functions
+## 定义核函数
 def linear_kernel(x1, x2):
+    """线性核：K(x, y) = x · y。"""
     return np.dot(x1, x2)
 
 def polynomial_kernel(x, y, p=3):
+    """多项式核：K(x, y) = (1 + x·y)^p，p 是次数。"""
     return (1 + np.dot(x, y)) ** p
 
 def gaussian_kernel(x, y, sigma=5.0):
+    """高斯核（RBF）：K(x, y) = exp(-||x-y||² / (2σ²))，σ 控制影响范围。"""
     return np.exp(-linalg.norm(x-y)**2 / (2 * (sigma ** 2)))
 ## end define kernel functions
 
@@ -42,9 +64,15 @@ class SVM(object):
         if self.C is not None: self.C = float(self.C)
 
     def fit(self, X, y):
+        """
+        训练 SVM：构建 QP 问题并求解。
+
+        :param X: 训练特征矩阵 (n_samples, n_features)
+        :param y: 训练标签 (+1 / -1)
+        """
         n_samples, n_features = X.shape
 
-        # Gram matrix
+        # 构建核矩阵（Gram matrix）：K[i,j] = kernel(X[i], X[j])
         K = np.zeros((n_samples, n_samples))
         for i in range(n_samples):
             for j in range(n_samples):
@@ -96,6 +124,7 @@ class SVM(object):
             self.w = None
 
     def project(self, X):
+        """计算决策函数值 w·x + b（线性核）或 Σ alpha_i*y_i*K(x,sv)+b（非线性核）。"""
         if self.w is not None:
             return np.dot(X, self.w) + self.b
         else:
@@ -108,5 +137,6 @@ class SVM(object):
             return y_predict + self.b
 
     def predict(self, X):
+        """预测：决策函数值 > 0 为 +1，< 0 为 -1。"""
         return np.sign(self.project(X))
 

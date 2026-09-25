@@ -8,16 +8,18 @@ Created on Fri Jul 10 22:04:33 2015
 import numpy as np
 
 class DecisionTree:
-    """决策树使用方法：
-    
-        - 生成实例： clf = DecisionTrees(). 参数mode可选，ID3或C4.5，默认C4.5
-        
-        - 训练，调用fit方法： clf.fit(X,y).  X,y均为np.ndarray类型
-                            
-        - 预测，调用predict方法： clf.predict(X). X为np.ndarray类型
-                                 
-        - 可视化决策树，调用showTree方法 
-    
+    """
+    决策树分类器，支持 ID3 和 C4.5 两种分裂标准。
+
+    使用方法：
+        - 生成实例： clf = DecisionTree(mode='ID3' 或 'C4.5')，默认 C4.5
+        - 训练： clf.fit(X, y)，X 和 y 均为 np.ndarray 类型
+        - 预测： clf.predict(X)，X 为 np.ndarray 类型
+        - 可视化： clf.show()（内部调用 treePlotter 绘制树）
+
+    属性：
+        _tree: 训练后得到的树结构（嵌套字典）
+        _mode: 'ID3' 或 'C4.5'
     """
     def __init__(self,mode='C4.5'):
         self._tree = None

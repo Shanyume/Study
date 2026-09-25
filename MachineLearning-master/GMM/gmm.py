@@ -4,9 +4,23 @@
 GMM 高斯混合模型（EM 算法）
 ============================
 
-GMM 假设数据由 k 个高斯分布混合而成，用 EM 算法迭代估计参数：
+GMM（Gaussian Mixture Model）假设数据由 k 个高斯分布混合而成：
+
+    P(x) = Σ_k π_k * N(x | μ_k, Σ_k)
+
+其中：
+    π_k: 第 k 个高斯分量的混合系数（先验），Σπ_k = 1
+    μ_k: 第 k 个分量的均值向量
+    Σ_k: 第 k 个分量的协方差矩阵
+
+EM 算法迭代：
     - E-step：计算每个样本属于每个高斯分量的响应度（软分配）
-    - M-step：用响应度加权更新均值、协方差和混合系数
+        resp[n,k] = π_k * N(x_n | μ_k, Σ_k) / Σ_j π_j * N(x_n | μ_j, Σ_j)
+    - M-step：用响应度加权更新参数
+        N_k = Σ_n resp[n,k]
+        π_k = N_k / N
+        μ_k = (1/N_k) Σ_n resp[n,k] * x_n
+        Σ_k = (1/N_k) Σ_n resp[n,k] * (x_n - μ_k)(x_n - μ_k)^T
 
 与 KMeans 相比，GMM 是软聚类（输出概率），协方差可以是椭圆形状。
 
@@ -79,6 +93,7 @@ class GMM:
 
     def predict(self, X):
         """返回每个样本最可能的高斯分量索引。"""
+        """返回每个样本最可能的高斯分量索引。"""
         X = np.asarray(X)
         probs = np.array([
             self.pi[i] * multivariate_normal.pdf(X, self.mu[i], self.cov[i])
@@ -87,6 +102,7 @@ class GMM:
 
 
 def best_label_mapping(y_true, y_pred, k):
+    """聚类标签和真实标签没有固定对应，遍历所有排列找最优映射后的准确率。"""
     """
     聚类标签和真实标签没有固定对应关系，需要做最优排列映射后计算准确率。
     :param y_true: 真实标签

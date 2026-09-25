@@ -3,9 +3,22 @@
 SVM by SMO（序列最小优化 SVM）
 ================================
 
-SMO 是 SVM 的经典训练算法：
-    - 每次选两个 alpha 变量优化，避免完整 QP 求解
-    - 支持 linear / quadratic / gaussian 核
+SMO（Sequential Minimal Optimization）是 SVM 的经典训练算法：
+
+核心思想：
+    - 每次迭代只优化两个 alpha 变量（i 和 j），其他保持不变
+    - 因为等式约束 Σ alpha_i y_i = 0，所以必须同时更新两个 alpha
+    - 逐轮遍历所有样本，直到 alpha 变化很小（收敛）或达到最大迭代次数
+
+SMO 更新公式：
+    alpha_j_new = alpha_j_old + y_j * (E_i - E_j) / k_ij
+    其中 k_ij = K(x_i,x_i) + K(x_j,x_j) - 2*K(x_i,x_j)
+    E_k = h(x_k) - y_k 是预测误差
+
+支持核函数：
+    - linear：线性核
+    - quadratic：二次核
+    - gaussian：高斯核（RBF）
 
 依赖：numpy
 """
@@ -18,8 +31,18 @@ filepath = os.path.dirname(os.path.abspath(__file__))
 
 class SVCSMO():
     """
-        Simple implementation of a Support Vector Classification using the
-        Sequential Minimal Optimization (SMO) algorithm for training.
+    使用 SMO 算法训练的支持向量分类器（简化实现）。
+
+    参数：
+        max_iter: 最大迭代轮数
+        kernel_type: 核类型，'linear' / 'quadratic' / 'gaussian'
+        C: 正则化参数（软间隔的惩罚系数）
+        epsilon: 收敛阈值，alpha 变化小于该值则停止
+        sigma: 高斯核的 σ 参数
+
+    属性：
+        w: 线性核时的权重向量
+        b: 偏置项
     """
     def __init__(self, max_iter=10000, kernel_type='linear', C=1.0, epsilon=0.001, sigma=5.0):
         """
@@ -43,6 +66,13 @@ class SVCSMO():
         self.epsilon = epsilon
         self.sigma = sigma
     def fit(self, X, y):
+        """
+        SMO 训练：迭代优化 alpha 变量。
+
+        :param X: 训练特征矩阵 (n_samples, n_features)
+        :param y: 训练标签 (+1 / -1)
+        :return: (支持向量数组, 迭代次数)
+        """
         # Initialization
         n, d = X.shape[0], X.shape[1]
         alpha = np.zeros((n))
@@ -92,6 +122,7 @@ class SVCSMO():
         support_vectors = X[alpha_idx, :]
         return support_vectors, count
     def predict(self, X):
+        """预测：返回 sign(w·x + b)。"""
         return self.h(X, self.w, self.b)
     def calc_b(self, X, y, w):
         b_tmp = y - np.dot(w.T, X.T)
