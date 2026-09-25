@@ -1,3 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+Kernel Ridge Regression（核岭回归）
+======================================
+
+核岭回归把核方法和岭回归结合：
+    - 核函数把数据映射到高维空间
+    - 岭回归在核空间中求解带 L2 正则的线性回归
+    - 闭式解：alpha = (K + C*I)^(-1) * y
+
+Doc: https://www.ics.uci.edu/~welling/classnotes/papers_class/Kernel-Ridge.pdf
+
+依赖：numpy、scipy
+"""
 from numpy.linalg import inv
 import numpy as np
 from scipy import linalg

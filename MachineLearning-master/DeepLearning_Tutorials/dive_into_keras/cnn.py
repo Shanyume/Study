@@ -1,21 +1,16 @@
-#coding:utf-8
-
-'''
-Author:wepon
-Code:https://github.com/wepe
-
+# -*- coding: utf-8 -*-
+"""
 File:cnn.py
     GPU run command:
         THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python cnn.py
     CPU run command:
         python cnn.py
 
-
 2016.06.06更新：
 这份代码是keras开发初期写的，当时keras还没有现在这么流行，文档也还没那么丰富，所以我当时写了一些简单的教程。
 现在keras的API也发生了一些的变化，建议及推荐直接上keras.io看更加详细的教程。
 
-'''
+"""
 #导入各种用到的模块组件
 from __future__ import absolute_import
 from __future__ import print_function

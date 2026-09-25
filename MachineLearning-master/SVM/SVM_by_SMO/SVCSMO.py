@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+"""
+SVM by SMO（序列最小优化 SVM）
+================================
+
+SMO 是 SVM 的经典训练算法：
+    - 每次选两个 alpha 变量优化，避免完整 QP 求解
+    - 支持 linear / quadratic / gaussian 核
+
+依赖：numpy
+"""
 from __future__ import division, print_function
 from numpy import linalg
 import os

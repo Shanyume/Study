@@ -1,9 +1,5 @@
-'''
-Author:wepon
-Code:https://github.com/wepe
+# -*- coding: utf-8 -*-
 
-File: cnn-svm.py
-'''
 from __future__ import print_function
 import cPickle
 import theano

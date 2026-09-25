@@ -1,11 +1,24 @@
 #!/usr/bin/env python3
-"""新补充模块的统一冒烟测试。"""
+# -*- coding: utf-8 -*-
+"""
+新增模块统一冒烟测试
+======================
+
+对本次新增的所有机器学习模块做快速验证：
+- 每个模块作为独立脚本运行
+- 输出 OK / FAIL 状态
+- FAIL 时打印最后一行错误信息
+
+用法：python examples/run_new_modules.py
+"""
 import sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 def run(name, script):
+    """运行单个脚本并打印状态。"""
+
     import subprocess
     env = {"PYTHONPATH": str(ROOT), "MPLBACKEND": "Agg", "PATH": "/usr/bin:/bin:/usr/local/bin"}
     r = subprocess.run([sys.executable, str(ROOT / script)], capture_output=True, text=True, env=env, timeout=180)
@@ -16,6 +29,7 @@ def run(name, script):
         print("   ", tail[-1][:150])
 
 if __name__ == "__main__":
+    # 依次运行所有新增模块的冒烟测试
     print("=" * 50)
     print("新增模块冒烟测试")
     print("=" * 50)

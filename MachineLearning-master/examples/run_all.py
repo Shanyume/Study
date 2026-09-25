@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-统一验证脚本：快速冒烟测试核心机器学习模块。
-用法：
-    python examples/run_all.py
+统一验证脚本：快速冒烟测试核心机器学习模块
+=============================================
+
+对项目核心模块做快速验证，确认在当前环境下能正常运行：
+- PCA、Decision Tree、KMeans、Naive Bayes
+- SVM SMO、SVM QP、Kernel Ridge
+- Iris sklearn 多模型对比
+
+用法：python examples/run_all.py
 """
 
 import sys

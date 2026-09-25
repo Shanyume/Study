@@ -1,21 +1,34 @@
-#coding=utf-8
+# -*- coding: utf-8 -*-
+"""
+KMeans 聚类算法
+================
 
-'''
-@author: wepon, http://2hwp.com
+KMeans 是最常用的聚类算法之一：
+    1. 随机初始化 k 个质心
+    2. 每个样本分配到最近的质心
+    3. 用每个簇的均值更新质心
+    4. 重复 2-3 直到收敛
+
+本脚本实现 KMeans 与二分 KMeans（biKMeans）。
+
 Reference:
-            Book: <<Machine Learning in Action>>
-            Software: sklearn.cluster.KMeans
+    Book: <<Machine Learning in Action>>
+    Software: sklearn.cluster.KMeans
 
-'''
+依赖：numpy
+"""
 import numpy as np
 
 class KMeans(object):
     """
+    KMeans 硬聚类：每个样本分配到最近的质心。
+
     - 参数
         n_clusters:
-            聚类个数，即k
+            聚类个数，即 k
         initCent:
-            质心初始化方式，可选"random"或指定一个具体的array,默认random，即随机初始化
+            质心初始化方式，可选 "random" 或指定一个具体的 array，
+            默认 random，即随机初始化
         max_iter:
             最大迭代次数
     """
@@ -62,9 +75,11 @@ class KMeans(object):
              self.centroids = self._randCent(X, self.n_clusters)
         
         clusterChanged = True
+        # 迭代最多 max_iter 次
         for _ in range(self.max_iter):
             clusterChanged = False
-            for i in range(m):#将每个样本点分配到离它最近的质心所属的族
+            # 分配步骤：每个样本点找最近的质心
+            for i in range(m):
                 minDist = np.inf; minIndex = -1
                 for j in range(self.n_clusters):
                     distJI = self._distEclud(self.centroids[j,:],X[i,:])
@@ -76,7 +91,8 @@ class KMeans(object):
                     
             if not clusterChanged:#若所有样本点所属的族都不改变,则已收敛，结束迭代
                 break   
-            for i in range(self.n_clusters):#更新质心，即将每个族中的点的均值作为质心
+            # 更新步骤：每个簇的均值作为新质心
+            for i in range(self.n_clusters):
                 ptsInClust = X[np.nonzero(self.clusterAssment[:,0]==i)[0]]#取出属于第i个族的所有点
                 self.centroids[i,:] = np.mean(ptsInClust, axis=0)
         

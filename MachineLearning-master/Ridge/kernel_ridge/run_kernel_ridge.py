@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Kernel Ridge 回归测试脚本
+============================
+
+用 Iris 数据集对比手写 KRR 与 sklearn 实现。
+
+依赖：numpy、scikit-learn
+"""
 import csv, os, sys
 import numpy as np
 from kernel_ridge import KernelRidge

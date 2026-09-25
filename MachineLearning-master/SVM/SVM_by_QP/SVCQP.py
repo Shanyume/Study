@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+"""
+SVM by Quadratic Programming（二次规划 SVM）
+==============================================
+
+用 cvxopt 求解 SVM 对偶问题的二次规划：
+    - 构建拉格朗日乘子 alpha 的 QP 问题
+    - 支持线性核、多项式核、高斯核
+    - 硬间隔（C=None）和软间隔（C 设定值）
+
+依赖：numpy、cvxopt
+"""
 import numpy as np
 from numpy import linalg
 import cvxopt

@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Keras 数据加载
+================
+
+加载 MNIST 图像数据并归一化，供 Keras 模型使用。
+旧版教程存档。
+"""
 #coding:utf-8
 """
 Author:wepon

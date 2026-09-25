@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+SVM SMO 测试脚本
+==================
+
+用 Iris 数据集测试 SMO SVM 实现。
+
+依赖：numpy
+"""
 
 import csv, os, sys
 import numpy as np

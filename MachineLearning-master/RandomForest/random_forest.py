@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Random Forest（随机森林）
+==========================
 
+随机森林是决策树的 Bagging 集成：
+    - 自助采样训练多棵 CART 决策树
+    - 每棵树分裂时随机选择特征子集
+    - 预测时所有树投票
+
+本脚本包含 CART 决策树和随机森林实现。
+
+依赖：numpy
+"""
 import numpy as np
 from collections import Counter
 

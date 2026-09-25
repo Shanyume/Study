@@ -1,3 +1,16 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+SVM QP 测试脚本
+=================
+
+用合成二维数据测试 QP SVM 的三种场景：
+- test_linear：线性可分
+- test_non_linear：非线性可分（高斯核）
+- test_soft：软间隔（重叠数据）
+
+依赖：numpy、cvxopt、matplotlib
+"""
 from SVCQP import *
 import pylab as pl
 

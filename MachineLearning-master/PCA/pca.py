@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Dec 25 19:42:23 2014
+PCA 主成分分析
+================
 
-@author: wepon
+PCA 通过对协方差矩阵做特征分解，找到方差最大的方向作为主成分，
+实现数据降维。
 
-code of PCA Algrithom
+- zeroMean：数据中心化
+- pca：按累计方差贡献率选择前 n 个主成分
+- percent2n：根据贡献率计算需要保留的特征值个数
+
+依赖：numpy
 """
 import numpy as np
 
-#根据要求的方差百分比，求出所需要的特征值的个数n
-def percent2n(eigVals,percent):
+# 根据要求的累计方差贡献率，求需要保留的特征值个数 n
+def percent2n(eigVals, percent):
     sortArray=np.sort(eigVals)   #升序
     sortArray=sortArray[-1::-1]  #逆转，即降序
     arraySum=sum(sortArray)
@@ -20,13 +26,13 @@ def percent2n(eigVals,percent):
         num+=1
         if tmp>=arraySum*percent:
             return num
-#零均值化
+# 数据中心化：每个特征减去均值，使均值为 0
 def zeroMean(dataMat):      
     meanVal=np.mean(dataMat,axis=0)     #按列求均值，即求各个特征的均值
     newData=dataMat-meanVal
     return newData,meanVal
 
-def pca(dataMat,percent=0.99):
+def pca(dataMat, percent=0.99):
     newData,meanVal=zeroMean(dataMat)
     covMat=np.cov(newData,rowvar=0)    #求协方差矩阵,return ndarray；若rowvar非0，一列代表一个样本，为0，一行代表一个样本
     
