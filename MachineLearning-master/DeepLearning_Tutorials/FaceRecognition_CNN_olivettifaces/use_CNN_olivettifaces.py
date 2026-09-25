@@ -33,15 +33,22 @@ def load_params(params_file):
     return layer0_params,layer1_params,layer2_params,layer3_params
 
 #读取图像，返回numpy.array类型的人脸数据以及对应的label
+#与train_CNN_olivettifaces.py中的load_data不同：这里不做训练/验证/测试划分，
+#因为推理阶段需要一次载入全部400张人脸进行批量预测
 def load_data(dataset_path):
+    #olivettifaces.gif是一张1080x940的大图，含40人x10张=400张57x47的人脸，排成20行x20列
+    #除以256做归一化，与训练时保持一致（否则预测结果不可靠）
     img = Image.open(dataset_path)
     img_ndarray = numpy.asarray(img, dtype='float64')/256
 
+    #faces每行存一张展平的人脸向量：57*47=2679维
     faces=numpy.empty((400,2679))
     for row in range(20):
         for column in range(20):
+            #按行、列从大图上裁出57x47的人脸子图并展平
             faces[row*20+column]=numpy.ndarray.flatten(img_ndarray [row*57:(row+1)*57,column*47:(column+1)*47])
 
+    #olivettifaces约定：同一人的10张照片连续排列，第i人(0~39)占据[i*10, i*10+10)
     label=numpy.empty(400)
     for i in range(40):
         label[i*10:i*10+10]=i
@@ -131,10 +138,12 @@ def use_CNN(dataset='olivettifaces.gif',params_file='params.pkl',nkerns=[5, 10])
     layer0_params,layer1_params,layer2_params,layer3_params=load_params(params_file)
     
     x = T.matrix('x')  #用变量x表示输入的人脸数据，作为layer0的输入
+    #这里一次性把全部400张人脸作为输入(batch_size=face_num=400)，做批量推理
 
     ######################
     #用读进来的参数初始化各层参数W、b
     ######################
+    #卷积层需要4维输入(batch,通道,高,宽)，故把展平的人脸矩阵reshape回(face_num,1,57,47)
     layer0_input = x.reshape((face_num, 1, 57, 47)) 
     layer0 = LeNetConvPoolLayer(
         input=layer0_input,
@@ -154,6 +163,8 @@ def use_CNN(dataset='olivettifaces.gif',params_file='params.pkl',nkerns=[5, 10])
         poolsize=(2, 2)
     )
 
+    #全连接层需要二维输入：把layer1输出的各张特征图展平拼接成一维长向量
+    #（nkerns[1]*11*8 = 10*11*8 = 880维，与训练时layer2的n_in一致）
     layer2_input = layer1.output.flatten(2)
     layer2 = HiddenLayer(
         input=layer2_input,
@@ -173,6 +184,7 @@ def use_CNN(dataset='olivettifaces.gif',params_file='params.pkl',nkerns=[5, 10])
     )
     
     #预测的类别pred
+    #预测的类别pred：对全部400张人脸一次前向传播，得到每张脸预测所属的人(0~39)
     pred = f(faces)
     
 

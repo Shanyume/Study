@@ -19,6 +19,39 @@ API 参考：http://scikit-learn.org/stable/modules/naive_bayes.html#naive-bayes
 
 依赖：numpy
 """
+
+# ============================================================
+# 数学推导与算法要点
+# ============================================================
+# 1. 贝叶斯定理：
+#        P(y=c_k | x) = P(x | y=c_k) * P(y=c_k) / P(x)
+#    分母 P(x) 与类别无关，比较各类后验大小时可省略，故
+#    预测规则为 y = argmax_k [ P(y=c_k) * Π_j P(x_j | y=c_k) ]。
+#
+# 2. "朴素"假设：给定类别时各特征条件独立，即
+#        P(x_1, ..., x_n | y=c_k) = Π_j P(x_j | y=c_k)
+#    该假设一般不成立，但因只关心 argmax，实践中效果往往很好。
+#
+# 3. 概率估计（极大似然 / 频率估计）：
+#        P(y=c_k)        ≈ 该类别样本数 / 总样本数
+#        P(x_j = v|y=c_k) ≈ 类别 c_k 中特征 j 取值 v 的次数
+#                           / 类别 c_k 样本数
+#    零概率问题：训练时未出现过的特征值 v，其概率估为 0，
+#    乘积中含一个 0 会使整个后验为 0。平滑（加伪计数）解决之：
+#        P(x_j=v|c_k) = (count(v|c_k) + alpha)
+#                      / (N_c_k + alpha * V_j)
+#    其中 V_j 为特征 j 的取值个数；alpha=1 即 Laplace 平滑。
+#
+# 4. 数值稳定性：多个 (0,1) 小数连乘极易下溢为 0（float64
+#    最小正规数约 1e-308），工程上通常在对数空间累加：
+#        log P(y=c_k|x) = log P(y=c_k) + Σ_j log P(x_j|c_k)
+#    本实现按"简单演示"保留连乘形式（见 _predict_single_sample）。
+#
+# 5. 高斯模型：对连续特征假设 x_j | y=c_k ~ N(mu_jk, sigma_jk^2)，
+#        P(x_j|c_k) = 1/(sigma*sqrt(2*pi)) * exp(-(x_j-mu)^2/(2*sigma^2))
+#    参数用极大似然估计：mu = 样本均值，sigma^2 = 样本方差。
+# ============================================================
+
 import numpy as np
 
 class MultinomialNB(object):
@@ -52,6 +85,11 @@ class MultinomialNB(object):
         self.class_prior = class_prior
         self.classes_ = None
         self.conditional_prob_ = None
+        # 三个超参数的作用小结：
+        #   alpha       —— 控制平滑强度：越大，估计越趋向"平均分布"，
+        #                  方差越小、偏差越大（偏差-方差权衡）；
+        #   fit_prior   —— 先验用频率估计还是均匀分布 1/K；
+        #   class_prior —— 直接指定先验（此时忽略 fit_prior）。
 
     def _calculate_feature_prob(self, feature):
         """
@@ -75,11 +113,22 @@ class MultinomialNB(object):
             count = np.sum(np.equal(feature, v))
             prob = (count + self.alpha) / (total_num + len(values) * self.alpha)
             value_prob[v] = prob
+        # 平滑公式含义：分子 = 真实计数 + 伪计数 alpha，
+        # 分母 = 样本总数 + alpha * V_j（V_j 为取值个数），
+        # 保证所有概率之和恰为 1，且任何取值概率都不为 0
+        #（alpha>0 时最小概率 = alpha/(N+alpha*V_j)）。
+        # 极限情况：alpha -> 0 退化为频率估计（极大似然）。
         return value_prob
 
     def fit(self, X, y):
         """
         训练朴素贝叶斯分类器。
+        本模型是"生成式"模型：训练时估计每个类别下的参数
+            （先验 P(y=c_k) + 每个特征的条件分布 P(x_j|y=c_k)），
+        预测时再按贝叶斯公式合成后验。这与 logistic 回归等
+        "判别式"模型（直接建模 P(y|x)）思路不同；生成式模型的
+        优势是数据效率高、能自然处理缺失特征，且可复用于
+        密度估计等任务。
         
         Parameters
         ----------
@@ -105,6 +154,9 @@ class MultinomialNB(object):
         n_features = X.shape[1]
 
         # ---------- 计算类先验概率 P(y=ck) ----------
+        # 先验 = 类别 c 的样本数占比（MLE 估计）；这里套用与
+        # 条件概率相同的平滑公式 (N_c + alpha)/(N + alpha*K)，
+        # 保证小样本下先验也不出现 0，且各类先验之和为 1。
         if self.class_prior is not None:
             # 如果用户指定了先验，直接使用（需检查长度）
             if len(self.class_prior) != n_classes:
@@ -159,6 +211,12 @@ class MultinomialNB(object):
     def _predict_single_sample(self, x):
         """
         对单个样本进行预测。
+        计算规则（MAP 估计，最大后验）：
+            y = argmax_c [ P(y=c) * Π_j P(x_j | y=c) ]
+        分母 P(x) 对所有类别相同，argmax 时省略。
+        注意：这里用的是连乘而非 log 求和，见文件头部
+        "数值稳定性"一节——特征多或概率小时会下溢为 0，
+        届时多个类别同判 0，结果将取决于先验大小。
         
         Parameters
         ----------
@@ -225,6 +283,12 @@ class GaussianNB(MultinomialNB):
     """
     高斯朴素贝叶斯分类器，适用于连续特征，假设特征服从高斯分布。
     继承自 MultinomialNB，但重写了条件概率的计算方法。
+    模型形式：
+        P(y=c_k|x) ∝ P(y=c_k) * Π_j N(x_j; mu_jk, sigma_jk^2)
+    训练即极大似然估计：mu_jk 取类别 c_k 下特征 j 的样本均值，
+    sigma_jk 取样本标准差；预测仍是 argmax 最大后验（MAP）。
+    与多项式版本相比，高斯版无需对特征离散化，天然适合
+    连续/数值型特征，但要求"每类内特征近似正态"。
     
     注意：由于继承，父类的 alpha 和 fit_prior 参数依然存在，
     但在高斯模型中，alpha 仅用于先验平滑（若 fit_prior=True），
@@ -249,11 +313,20 @@ class GaussianNB(MultinomialNB):
         # 防止方差为0，添加极小值
         if sigma == 0:
             sigma = 1e-9
+        # 说明：MLE 的方差估计分母是 N（而非 N-1），略向下偏；
+        # 小样本下可用 N-1（无偏估计）改善，此处从简。
+        # sigma 兜底 1e-9：若某类下特征恒定（方差为 0），
+        # 高斯密度会退化为 delta 函数导致除零/inf，加 epsilon
+        # 使其退化为极窄的高斯，数值上可安全计算。
         return (mu, sigma)
 
     def _prob_gaussian(self, mu, sigma, x):
         """
-        高斯概率密度函数。
+        高斯概率密度函数：
+            p(x) = 1/(sigma*sqrt(2*pi)) * exp(-(x-mu)^2 / (2*sigma^2))
+        注意：连续特征取的是概率密度而非概率值（可为 >1），
+        但因比较的只是 argmax 后验，常数因子不影响结果，
+        所以不需要像离散分布那样归一化。
         """
         return (1.0 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-((x - mu) ** 2) / (2 * sigma ** 2))
 
@@ -291,6 +364,9 @@ class GaussianNB(MultinomialNB):
                 self.class_prior_ = np.full(n_classes, 1.0 / n_classes)
             else:
                 # 高斯先验通常不使用平滑，直接用频率
+                # （与父类 MultinomialNB 的区别：父类先验带 alpha
+                #  平滑，这里就是简单的 N_c/N；类别数通常不多，
+                #  先验为 0 的概率很低，不影响数值稳定）
                 self.class_prior_ = []
                 for c in self.classes_:
                     c_num = np.sum(np.equal(y, c))
@@ -298,6 +374,9 @@ class GaussianNB(MultinomialNB):
                 self.class_prior_ = np.array(self.class_prior_)
 
         # ---------- 计算条件概率（高斯参数） ----------
+        # 这里"条件概率"实际存的是 (mu, sigma) 参数元组，
+        # 由 predict 路径中的 _get_xj_prob（已重写）在预测时
+        # 即时代入高斯密度公式求值，而非存储离散的取值概率。
         self.conditional_prob_ = {}
         for c in self.classes_:
             mask = (y == c)

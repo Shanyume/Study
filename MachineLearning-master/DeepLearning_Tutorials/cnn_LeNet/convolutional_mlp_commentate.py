@@ -33,6 +33,8 @@ from theano.tensor.nnet import conv
 
 """
 卷积+下采样合成一个层LeNetConvPoolLayer
+#前向传播：先对输入特征图做线性卷积得到卷积输出，再加每个输出特征图各自的偏置b，
+#经tanh激活，最后做2x2最大池化（maxpooling），池化可减小特征图尺寸、提供平移不变性
 rng:随机数生成器，用于初始化W
 input:4维的向量，theano.tensor.dtensor4
 filter_shape:(number of filters, num input feature maps,filter height, filter width)
@@ -199,9 +201,12 @@ class LogisticRegression(object):
 #params，LogisticRegression的参数     
         self.params = [self.W, self.b]
 
+    #负对数似然损失（cross-entropy）：对每个样本取其真实类别对应的概率log再取负均值，
+    #即 -(1/m)*sum_i log p(y_i|x_i)；p_y_given_x的第i行第y[i]列正是样本i真实类别的预测概率
     def negative_log_likelihood(self, y):
         return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
 
+    #zero-one损失：预测类别y_pred与真实类别y不一致则记1，求均值即本batch的误差率
     def errors(self, y):
         if y.ndim != self.y_pred.ndim:
             raise TypeError(
@@ -288,6 +293,7 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200,
  20个卷积核，第二个有50个
     """
 
+    #随机数生成器（固定种子保证可复现），用于各层权重W的随机初始化
     rng = numpy.random.RandomState(23455)
 
     #加载数据
@@ -417,8 +423,11 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200,
     #   开始训练  #
     ###############
     print('... training')
+    #patience是"耐心"：连续多少轮迭代（以batch为单位）验证误差不再改善就提前停止训练（早停）
+    #patience_increase：当验证损失有足够大的改善时，patience要放大到iter的几倍，防止过早停止
     patience = 10000  
     patience_increase = 2  
+    #验证损失改善到该阈值以下才算"足够好的改善"，用于决定是否放大patience
     improvement_threshold = 0.995 
                                    
     validation_frequency = min(n_train_batches, patience / 2)
@@ -426,7 +435,9 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200,
 
     best_validation_loss = numpy.inf   #最好的验证集上的loss，最好即最小
     best_iter = 0                      #最好的迭代次数，以batch为单位。比如best_iter=10000，说明在训练完第10000个batch时，达到best_validation_loss
+    #test_score：最优模型在测试集上的误差，随最优验证模型的更新而更新
     test_score = 0.
+    #start_time：记录训练开始时间，用于最后统计耗时
     start_time = time.clock()
 
     epoch = 0
@@ -444,6 +455,7 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200,
         epoch = epoch + 1
         for minibatch_index in range(n_train_batches):
 
+            #累计已训练的batch总数iter（跨epoch累计），用于验证频率判断与早停判断
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
             if iter % 100 == 0:
@@ -500,5 +512,7 @@ if __name__ == '__main__':
     evaluate_lenet5()
 
 
+#tutorial遗留的辅助函数：用外部传入的状态字典（hyper-parameters）调用训练流程，
+#便于用实验框架批量跑不同超参数组合，本文件直接运行主函数时不会用到
 def experiment(state, channel):
     evaluate_lenet5(state.learning_rate, dataset=state.dataset)

@@ -76,6 +76,20 @@ python examples/run_all.py
 
 当前验证包含核心模块的快速冒烟测试，用于确认 Python 3 / NumPy 2 / scikit-learn 1.9 环境下可以运行。
 
+## 学习指南
+
+- [tutorial/LEARNING_PATH.md](tutorial/LEARNING_PATH.md)：按阶段从基础到进阶的学习路线
+- [tutorial/CHEATSHEET.md](tutorial/CHEATSHEET.md)：算法、参数、公式速查表
+- [tutorial/DEBUGGING_GUIDE.md](tutorial/DEBUGGING_GUIDE.md)：常见问题排查指南
+- [notebooks/](notebooks/)：交互式学习笔记本（Jupyter）
+
+## 交互式学习
+
+```bash
+# 启动 Jupyter Lab
+jupyter lab notebooks/
+```
+
 ## 贡献
 
 原始仓库与部分代码来自公开学习项目，感谢原作者：

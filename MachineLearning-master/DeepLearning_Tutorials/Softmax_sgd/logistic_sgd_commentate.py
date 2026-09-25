@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
 This tutorial introduces logistic regression using Theano and stochastic
 gradient descent.
 
@@ -93,6 +93,7 @@ class LogisticRegression(object):
             name='b',
             borrow=True
         )
+        #W、b都用theano.shared变量保存：它们是要反复更新的模型参数，shared变量才能被拷贝到GPU加速计算
         #n_in,输入的维度，n_out输出的维度。W大小时n_in行n_out列，b大小为n_out维向量。即：每个输出对应W的一列以及b的一个元素。WX+b
 
         # symbolic expression for computing the matrix of class-membership
@@ -114,7 +115,7 @@ class LogisticRegression(object):
         self.params = [self.W, self.b]
 
     def negative_log_likelihood(self, y):
-        """Return the mean of the negative log-likelihood of the prediction
+        r"""Return the mean of the negative log-likelihood of the prediction
         of this model under a given target distribution.
 
         .. math::
@@ -155,6 +156,7 @@ class LogisticRegression(object):
         :param y: corresponds to a vector that gives for each example the
                   correct label
         """
+        #0-1损失：minibatch里预测类别与真实标签不一致的样本占比（错误率）
 
         # check if y has same dimension of y_pred
         if y.ndim != self.y_pred.ndim:
@@ -167,6 +169,7 @@ class LogisticRegression(object):
             # the T.neq operator returns a vector of 0s and 1s, where 1
             # represents a mistake in prediction
             return T.mean(T.neq(self.y_pred, y))
+            #T.neq逐元素比较预测与真实标签，不等记1；取均值即minibatch错误率
         else:
             raise NotImplementedError()
 
@@ -244,6 +247,7 @@ def load_data(dataset):
         # ``shared_y`` we will have to cast it to int. This little hack
         # lets ous get around this issue
         return shared_x, T.cast(shared_y, 'int32')
+        #x、y都转成floatX的shared变量放进GPU；y是标签，后面要当索引用，所以返回时cast回int32
 
 
     test_set_x, test_set_y = shared_dataset(test_set)
@@ -336,7 +340,9 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
             y: valid_set_y[index * batch_size: (index + 1) * batch_size]
         }
     )
+    #validate_model与test_model结构相同，只是givens里的数据换成验证集
 
+    #用Theano自动微分：求代价cost对参数W、b的偏导（即梯度）
     g_W = T.grad(cost=cost, wrt=classifier.W)
     g_b = T.grad(cost=cost, wrt=classifier.b)
 
@@ -345,7 +351,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
     # (variable, update expression) pairs.
     updates = [(classifier.W, classifier.W - learning_rate * g_W),
                (classifier.b, classifier.b - learning_rate * g_b)]
-    #更新的规则，列表。
+    #更新的规则：(旧参数, 新参数表达式)对的列表，W、b各自沿负梯度方向走learning_rate一步（梯度下降）
     # compiling a Theano function `train_model` that returns the cost, but in
     # the same time updates the parameter of the model based on the rules
     # defined in `updates`
@@ -365,6 +371,9 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
     ###############
     print('... training the model')
     # early-stopping parameters
+    #早停参数：patience是容忍的迭代步数，超过则停止训练；improvement_threshold=0.995
+    #表示验证损失需相对下降超过0.5%才算显著改进（达标则放宽patience）；
+    #validation_frequency取min(一个epoch的minibatch数, patience/2)，本例即每epoch验证一次
     patience = 5000  # look as this many examples regardless
     patience_increase = 2  # wait this much longer when a new best is
                                   # found
@@ -376,6 +385,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                                   # on the validation set; in this case we
                                   # check every epoch
 
+    #best_validation_loss初始为正无穷，保证第一次验证就能刷新记录；test_score记录当前最好模型的测试错误率
     best_validation_loss = numpy.inf
     test_score = 0.
     start_time = time.clock()
@@ -384,12 +394,14 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
     epoch = 0
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
+        #遍历当前epoch的每个minibatch：train_model前向算cost，同时按updates更新W、b
         for minibatch_index in xrange(n_train_batches):
 
             minibatch_avg_cost = train_model(minibatch_index)
             # iteration number
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
+            #每隔validation_frequency个minibatch，就在验证集上算一次平均0-1损失
             if (iter + 1) % validation_frequency == 0:
                 # compute zero-one loss on validation set
                 validation_losses = [validate_model(i)
@@ -407,6 +419,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                 )
 
                 # if we got the best validation score until now
+                #验证错误率刷新最好记录时：改进足够大就放宽patience，并在测试集上评估当前最好模型
                 if this_validation_loss < best_validation_loss:
                     #improve patience if loss improvement is good enough
                     if this_validation_loss < best_validation_loss *  \
@@ -433,6 +446,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                         )
                     )
 
+            #迭代步数超过patience（期间验证损失没有显著改进）→ 触发早停，退出训练循环
             if patience <= iter:
                 done_looping = True
                 break
@@ -442,6 +456,7 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
 
 # 我们上面更新patience只是通过简单的比较，事实上可以使用更好的方法。
 
+    #输出训练结果：最好验证错误率、对应的测试错误率，以及运行时长
     end_time = time.clock()
     print(
         (

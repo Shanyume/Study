@@ -6,6 +6,37 @@ import matplotlib.pyplot as plt
 import time
 
 
+# ============================================================
+# 数学推导与算法要点
+# ============================================================
+# 线性回归模型：假设目标值 y 与特征 x 之间为线性关系
+#     y = w1*x1 + w2*x2 + ... + wn*xn + b
+# 写成矩阵形式即 y = X @ w + b，其中 w 为权重向量，b 为偏置。
+#
+# 方法一：正规方程（Normal Equation）
+#     最小化均方误差 J(w) = (1/2m) * ||X w - y||^2，
+#     令梯度 ∇J = X^T (X w - y) = 0，解得闭式解析解：
+#         w = (X^T X)^(-1) X^T y
+#     - 要求 X^T X 可逆（即各特征列线性无关，无多重共线性）；
+#     - 时间复杂度 O(n^3)（矩阵求逆），n 为特征数，
+#       因此只适合中小规模（特征数不太大）的数据。
+#
+# 方法二：批量梯度下降（Batch Gradient Descent）
+#     代价函数 J(w,b) = (1/2m) * Σ (X w + b - y)² 是凸二次函数，
+#     存在唯一全局极小值点（即正规方程的解），不存在局部最优陷阱。
+#     更新规则（沿梯度反方向下降）：
+#         w := w - lr * (1/m) * X^T (Xw + b - y)
+#         b := b - lr * (1/m) * Σ (Xw + b - y)
+#     收敛条件：
+#     - 学习率 lr 必须小于 2/L，其中 L 为 Hessian 矩阵 X^T X / m
+#       的最大特征值（Lipschitz 常数）；lr 过大代价振荡发散，
+#       lr 过小则收敛极慢；
+#     - 当特征尺度差异很大时，J 的等高线呈狭长椭圆，
+#       条件数（最大/最小特征值之比）越大收敛越慢，
+#       因此实践中应先将特征归一化/标准化。
+# ============================================================
+
+
 class LinearRegression:
     """
     线性回归模型
@@ -17,6 +48,9 @@ class LinearRegression:
     def __init__(self):
         self.weights = None  # 权重向量 w（含偏置）
         self.bias = None     # 偏置 b（当使用梯度下降时单独存储）
+        # 说明：正规方程把偏置合并进权重向量（拼一列 1），
+        # 梯度下降则把 b 单独参数化，两者预测结果数学上等价：
+        #     y_hat = X @ w + b
 
     def fit(self, X, y, method='normal_eq', lr=0.01, n_iters=1000):
         """
@@ -59,10 +93,18 @@ class LinearRegression:
         self.bias = self.weights[0]
         # 剩余元素是各特征的权重 w1, w2, ..., wn
         self.weights = self.weights[1:]
+        # 注意：正规方程一步得到全局最优解（代价 J 的最小值），
+        # 无需迭代、无需调学习率；但 X^T X 接近奇异（特征强相关）
+        # 时，inv 会放大数值误差，可改用 np.linalg.lstsq 伪逆求解。
 
     def _fit_gradient_descent(self, X, y, lr, n_iters):
         """
-        批量梯度下降求解
+        批量梯度下降求解：
+        每次迭代都用全部 m 个样本计算一次完整梯度，再更新参数。
+        更新公式：w := w - lr * dw，b := b - lr * db。
+        与正规方程相比：不需要求矩阵逆（数值更稳定、内存更省），
+        但需迭代 n_iters 次（时间 O(n_iters * m * n)），
+        且收敛速度依赖学习率和特征尺度。
         """
         m, n = X.shape
         # 初始化权重向量为零向量，偏置为 0
@@ -92,6 +134,8 @@ class LinearRegression:
             # 沿梯度反方向更新参数，lr 为学习率控制步长
             self.weights -= lr * dw
             self.bias -= lr * db
+            # 收敛判据（观察用）：cost_history 单调递减且相邻差趋于 0，
+            # 说明已接近全局最小值点（J 为凸函数，梯度 -> 0）。
 
         self.cost_history = cost_history
 
@@ -161,6 +205,10 @@ def demo_normal_eq():
 def demo_gradient_descent():
     """
     演示：梯度下降求解线性回归
+    注意：本数据集特征取值为 0~100 量级（未归一化），
+    若学习率偏大，J 沿大尺度特征方向的曲率大，
+    需满足 lr < 2/L（L = λmax(X^T X / m)）才不会发散，
+    故此处取较小的 lr=0.0001。
     """
     print("\n" + "=" * 50)
     print("梯度下降求解线性回归")
@@ -179,6 +227,9 @@ def demo_gradient_descent():
 def demo_plot():
     """
     演示：一维线性回归可视化
+    一维情形下正规方程退化为闭式解：
+        w = Σ(x - x̄)(y - ȳ) / Σ(x - x̄)²，b = ȳ - w * x̄
+    即最小二乘直线恒过数据均值点 (x̄, ȳ)。
     """
     np.random.seed(0)
     X_1d = np.linspace(0, 10, 80)

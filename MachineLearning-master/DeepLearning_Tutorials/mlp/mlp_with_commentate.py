@@ -127,9 +127,12 @@ class LogisticRegression(object):
 #params，LogisticRegression的参数     
         self.params = [self.W, self.b]
 
+    #负对数似然损失（cross-entropy）：对每个样本取其真实类别对应的概率log再取负均值，
+    #即 -(1/m)*sum_i log p(y_i|x_i)；p_y_given_x的第i行第y[i]列正是样本i真实类别的预测概率
     def negative_log_likelihood(self, y):
         return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
 
+    #zero-one损失：预测类别y_pred与真实类别y不一致则记1，求均值即本batch的误差率
     def errors(self, y):
         if y.ndim != self.y_pred.ndim:
             raise TypeError(
@@ -162,6 +165,8 @@ class MLP(object):
         )
 
 #规则化项：常见的L1、L2_sqr
+#规则化项：L1是权重的绝对值之和（驱使权重稀疏），L2_sqr是权重平方和（驱使权重整体变小），
+#两者都只针对各层的权重W、不包括偏置b
         self.L1 = (
             abs(self.hiddenLayer.W).sum()
             + abs(self.logRegressionLayer.W).sum()
@@ -356,6 +361,8 @@ batch_size=20，即每训练完20个样本才计算梯度并更新参数
     
 
 
+    #patience是"耐心"：连续多少轮迭代（以batch为单位）验证误差不再改善就提前停止训练（早停）
+    #patience_increase：当验证损失有足够大的改善时，patience要放大到iter的几倍，防止过早停止
     patience = 10000  
     patience_increase = 2  
 #提高的阈值，在验证误差减小到之前的0.995倍时，会更新best_validation_loss  
@@ -364,9 +371,13 @@ batch_size=20，即每训练完20个样本才计算梯度并更新参数
     validation_frequency = min(n_train_batches, patience / 2)
   
 
+    #best_validation_loss：历史最优验证损失，初值设为无穷大，保证第一次验证一定能刷新
     best_validation_loss = numpy.inf
+    #best_iter：取得最优验证损失时的迭代次数（以batch为单位）
     best_iter = 0
+    #test_score：最优模型在测试集上的误差，随最优验证模型的更新而更新
     test_score = 0.
+    #start_time：记录训练开始时间，用于最后统计耗时
     start_time = time.clock()
     
 #epoch即训练步数，每个epoch都会遍历所有训练数据

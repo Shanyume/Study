@@ -28,13 +28,18 @@ from theano.tensor.nnet import conv
 函数返回train_data,valid_data,test_data以及对应的label
 """
 def load_data(dataset_path):
+    #olivettifaces.gif是一张1080x940的大图，包含40人x10张=400张小脸图，排成20行x20列
+    #转为float64数组后除以256做归一化，使像素值大致落在[0,1)区间
     img = Image.open(dataset_path)
     img_ndarray = numpy.asarray(img, dtype='float64')/256
+    #faces每行存一张人脸：57*47=2679维的一维向量，400行对应400张脸
     faces=numpy.empty((400,2679))
     for row in range(20):
        for column in range(20):
+        #按行、列从大图上裁出57x47的人脸子图并展平为一维向量
         faces[row*20+column]=numpy.ndarray.flatten(img_ndarray [row*57:(row+1)*57,column*47:(column+1)*47])
 
+    #olivettifaces的约定：同一人的10张照片连续排列，第i人(0~39)占据label[i*10:i*10+10]
     label=numpy.empty(400)
     for i in range(40):
         label[i*10:i*10+10]=i
@@ -48,6 +53,7 @@ def load_data(dataset_path):
     test_data=numpy.empty((40,2679))
     test_label=numpy.empty(40)
 
+    #每个人(40人)的10张照片按8:1:1划分：8张训练、1张验证、1张测试
     for i in range(40):
         train_data[i*8:i*8+8]=faces[i*10:i*10+8]
         train_label[i*8:i*8+8]=label[i*10:i*10+8]
@@ -78,6 +84,7 @@ def load_data(dataset_path):
 
 
 #分类器，即CNN最后一层，采用逻辑回归（softmax）
+#W大小是(n_in,n_out)：每一列对应一个类别（这里n_out=40个"人"）的连接权重
 class LogisticRegression(object):
     def __init__(self, input, n_in, n_out):
         self.W = theano.shared(
@@ -96,13 +103,17 @@ class LogisticRegression(object):
             name='b',
             borrow=True
         )
+        #softmax逐行计算样本属于40个人的概率分布，p_y_given_x第i行第c列=样本i是c号人的概率
         self.p_y_given_x = T.nnet.softmax(T.dot(input, self.W) + self.b)
+        #argmax按行取最大概率的下标作为预测的"人"
         self.y_pred = T.argmax(self.p_y_given_x, axis=1)
         self.params = [self.W, self.b]
 
+    #负对数似然损失（交叉熵）：对每个样本取其真实类别的预测概率log再取负均值
     def negative_log_likelihood(self, y):
         return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
 
+    #zero-one误差：预测的人与真实人不一致记1，求均值即本batch的识别错误率
     def errors(self, y):
         if y.ndim != self.y_pred.ndim:
             raise TypeError(
@@ -122,6 +133,8 @@ class HiddenLayer(object):
 
         self.input = input
 
+        #W未给定则随机初始化：在[-sqrt(6/(n_in+n_out)), sqrt(6/(n_in+n_out))]上均匀采样
+        #（Xavier均匀初始化，保证前向传播各层方差稳定；若用sigmoid则上下界乘4）
         if W is None:
             W_values = numpy.asarray(
                 rng.uniform(
@@ -142,6 +155,7 @@ class HiddenLayer(object):
         self.W = W
         self.b = b
 
+        #全连接层输出：线性变换input@W+b，再经激活函数tanh压缩到(-1,1)
         lin_output = T.dot(input, self.W) + self.b
         self.output = (
             lin_output if activation is None
@@ -152,13 +166,17 @@ class HiddenLayer(object):
 
 
 #卷积+采样层（conv+maxpooling）
+#filter_shape=(输出特征图个数, 输入特征图个数, 核高, 核宽)，即一个卷积层由多个卷积核组成
 class LeNetConvPoolLayer(object):
 
     def __init__(self, rng, input, filter_shape, image_shape, poolsize=(2, 2)):
 
+        #断言输入特征图个数必须与卷积核的输入通道数一致
         assert image_shape[1] == filter_shape[1]
         self.input = input
 
+        #fan_in:每个输出神经元连接的上游权重数=输入通道x核高x核宽
+        #fan_out:每个输入权重的梯度来自多少输出神经元=输出特征图数x核高x核宽/池化块大小
         fan_in = numpy.prod(filter_shape[1:])
         fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) /
                    numpy.prod(poolsize))
@@ -174,10 +192,12 @@ class LeNetConvPoolLayer(object):
         )
 
         # the bias is a 1D tensor -- one bias per output feature map
+        #偏置b是一维向量，每个输出特征图各对应一个偏置（由卷积核个数filter_shape[0]决定）
         b_values = numpy.zeros((filter_shape[0],), dtype=theano.config.floatX)
         self.b = theano.shared(value=b_values, borrow=True)
 
         # 卷积
+        #线性卷积：每个卷积核滑过输入特征图得到一张输出特征图，核内加权求和
         conv_out = conv.conv2d(
             input=input,
             filters=self.W,
@@ -186,12 +206,14 @@ class LeNetConvPoolLayer(object):
         )
 
         # 子采样
+        #2x2最大池化：取每个2x2块的最大值，特征图尺寸约减半，提供平移不变性并降维
         pooled_out = downsample.max_pool_2d(
             input=conv_out,
             ds=poolsize,
             ignore_border=True
         )
 
+        #加偏置后经tanh激活；b通过dimshuffle('x','x','x')广播到每张特征图的每个位置
         self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
 
         # store parameters of this layer
@@ -199,6 +221,8 @@ class LeNetConvPoolLayer(object):
 
 
 #保存训练参数的函数
+#依次把layer0~layer3各层的参数(W,b)以pickle序列化存入params.pkl，
+#use_CNN_olivettifaces.py中load_params()读取该文件即可还原整个训练好的CNN
 def save_params(param1,param2,param3,param4):  
         import pickle  
         write_file = open('params.pkl', 'wb')   
@@ -256,6 +280,7 @@ def evaluate_olivettifaces(learning_rate=0.05, n_epochs=200,
     # Reshape matrix of rasterized images of shape (batch_size, 57 * 47)
     # to a 4D tensor, compatible with our LeNetConvPoolLayer
     # (57, 47) is the size of  images.
+    #卷积层需要4维输入(batch,通道,高,宽)，故把展平的人脸矩阵reshape回(batch_size,1,57,47)
     layer0_input = x.reshape((batch_size, 1, 57, 47))
 
     # 第一个卷积+maxpool层
@@ -302,8 +327,10 @@ def evaluate_olivettifaces(learning_rate=0.05, n_epochs=200,
     # 定义优化算法的一些基本要素：代价函数，训练、验证、测试model、参数更新规则（即梯度下降）
     ###############
     # 代价函数
+    # 代价函数：交叉熵损失（负对数似然），本模型未加L1/L2正则化项
     cost = layer3.negative_log_likelihood(y)
     
+    #test_model：给定batch下标index，在测试集上计算zero-one误差
     test_model = theano.function(
         [index],
         layer3.errors(y),
@@ -332,6 +359,8 @@ def evaluate_olivettifaces(learning_rate=0.05, n_epochs=200,
         for param_i, grad_i in zip(params, grads)
     ]
     #train_model在训练过程中根据MSGD优化更新参数
+    #train_model：每个batch计算一次代价函数，并按updates规则(参数-学习率x梯度)原地更新全部参数
+    # train_model在训练过程中根据MSGD优化更新参数
     train_model = theano.function(
         [index],
         cost,
@@ -355,22 +384,29 @@ def evaluate_olivettifaces(learning_rate=0.05, n_epochs=200,
     validation_frequency = min(n_train_batches, patience / 2) 
 
 
+    #best_validation_loss：历史最优验证误差，初值无穷大保证首次验证一定刷新
     best_validation_loss = numpy.inf
+    #best_iter：取得最优验证误差时的迭代次数（以batch为单位）
     best_iter = 0
+    #test_score：最优模型对应的测试集误差
     test_score = 0.
     start_time = time.clock()
 
     epoch = 0
     done_looping = False
 
+    #主训练循环：外层控制epoch数(每个epoch遍历全部训练batch)，
+    #内层逐batch调用train_model训练，定期在验证集上评估并做早停(patience)判断
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
         for minibatch_index in range(n_train_batches):
 
+            #跨epoch累计的batch总数，用于验证频率判断和早停(patience)判断
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
             if iter % 100 == 0:
                 print('training @ iter = ', iter)
+            #对一个batch训练：前向传播算loss、反向传播算梯度、更新各层W和b
             cost_ij = train_model(minibatch_index)
             
             if (iter + 1) % validation_frequency == 0:
@@ -394,6 +430,8 @@ def evaluate_olivettifaces(learning_rate=0.05, n_epochs=200,
                     # save best validation score and iteration number
                     best_validation_loss = this_validation_loss
                     best_iter = iter
+            #注意：原代码在此处（for循环内、无缩进差异）每训一个batch都把当前参数存盘，
+            #故params.pkl最终保存的是"最后一次训练时"的参数
             save_params(layer0.params,layer1.params,layer2.params,layer3.params)
 
             # test it on the test set

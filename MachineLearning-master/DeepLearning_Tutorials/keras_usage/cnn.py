@@ -26,6 +26,7 @@ from data import load_data
 import random
 import numpy as np
 
+#固定随机种子，保证权重随机初始化、数据打乱等随机过程可复现
 np.random.seed(1024)  # for reproducibility
 
 
@@ -90,7 +91,9 @@ model.add(Activation('softmax'))
 ##############
 #使用SGD + momentum
 #model.compile里的参数loss就是损失函数(目标函数)
+#lr是学习速率，decay是权重衰减(正则化)，momentum动量项可加速收敛、抑制震荡
 sgd = SGD(lr=0.05, decay=1e-6, momentum=0.9, nesterov=True)
+#分类交叉熵：-(1/m)*sum_i sum_c 1{y_i=c} log p(c|x_i)，即对每个样本真实类别的预测概率取-log求均值
 model.compile(loss='categorical_crossentropy', optimizer=sgd)
 
 
